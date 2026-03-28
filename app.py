@@ -1,0 +1,476 @@
+import streamlit as st
+import sqlite3
+import sys
+import os
+import plotly.graph_objects as go
+import pandas as pd
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from data.crear_base_dades import crear_base_dades
+from core.motor import MotorSimulacio
+from ia.groq_agent import AgentIA
+
+DB_PATH = "simulador.db"
+
+# =============================================================================
+# CONFIGURACIÓ I CSS
+# =============================================================================
+
+st.set_page_config(
+    page_title="EcoSim — Simulador d'Ecosistemes",
+    page_icon="🌍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+.stApp { background: #080d1a; color: #c9d4e8; }
+
+section[data-testid="stSidebar"] {
+    background: #0d1424 !important;
+    border-right: 1px solid #1e2d4a;
+}
+section[data-testid="stSidebar"] * { color: #8fa3c4 !important; }
+
+h1 { font-family:'Space Mono',monospace !important; color:#e8f4fd !important; font-size:1.8rem !important; letter-spacing:-1px; }
+h2 { font-family:'Space Mono',monospace !important; color:#7dd3fc !important; font-size:1.2rem !important; }
+h3 { color:#94b8d8 !important; font-weight:500 !important; }
+
+.sim-card { background:#0d1829; border:1px solid #1e3050; border-radius:12px; padding:20px 24px; margin-bottom:16px; }
+.sim-card-green { background:linear-gradient(135deg,#071a10 0%,#0d2218 100%); border:1px solid #1a4a2e; border-radius:12px; padding:20px 24px; margin-bottom:16px; }
+
+.metric-box { background:#0d1829; border:1px solid #1e3050; border-radius:10px; padding:14px 18px; text-align:center; }
+.metric-value { font-family:'Space Mono',monospace; font-size:1.6rem; color:#38bdf8; font-weight:700; line-height:1.2; }
+.metric-label { font-size:0.75rem; color:#4a6a8a; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
+.metric-unit  { font-size:0.75rem; color:#2d7ab0; font-family:'Space Mono',monospace; }
+
+.tag { display:inline-block; padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; }
+.tag-green { background:#0a2e18; color:#34d399; border:1px solid #0f4a28; }
+.tag-blue  { background:#071830; color:#60a5fa; border:1px solid #0f2d5a; }
+.tag-amber { background:#1f1000; color:#fbbf24; border:1px solid #3d2200; }
+.tag-red   { background:#1f0a0a; color:#f87171; border:1px solid #3d1515; }
+
+.rel-row { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid #111d30; font-size:0.85rem; }
+.rel-origen  { color:#60a5fa; font-weight:500; }
+.rel-desti   { color:#34d399; font-weight:500; }
+.rel-pes-pos { color:#34d399; font-family:'Space Mono',monospace; font-size:0.8rem; }
+.rel-pes-neg { color:#f87171; font-family:'Space Mono',monospace; font-size:0.8rem; }
+.rel-desc    { color:#4a6a8a; font-size:0.8rem; }
+
+.esc-card { background:#0d1829; border:1px solid #1e3050; border-radius:10px; padding:16px 20px; margin-bottom:10px; }
+.esc-nom  { font-size:1rem; font-weight:600; color:#c9d4e8; }
+.esc-tema { font-size:0.8rem; color:#4a6a8a; margin-top:2px; }
+.esc-meta { font-size:0.75rem; color:#2d5a8a; margin-top:6px; font-family:'Space Mono',monospace; }
+
+.sidebar-logo { font-family:'Space Mono',monospace; font-size:1.3rem; color:#38bdf8 !important; font-weight:700; letter-spacing:-0.5px; }
+.sidebar-sub  { font-size:0.7rem; color:#2d5a8a !important; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:20px; }
+
+.stTextInput input, .stTextArea textarea, .stNumberInput input {
+    background:#0d1829 !important; border:1px solid #1e3050 !important; color:#c9d4e8 !important; border-radius:8px !important;
+}
+.stSelectbox > div > div { background:#0d1829 !important; border:1px solid #1e3050 !important; color:#c9d4e8 !important; }
+
+.stButton > button {
+    background:#0f2d50 !important; color:#60a5fa !important; border:1px solid #1e4a7a !important;
+    border-radius:8px !important; font-weight:500 !important; transition:all 0.2s !important;
+}
+.stButton > button:hover { background:#1a4a80 !important; }
+.stButton > button[kind="primary"] {
+    background:linear-gradient(135deg,#0f4a2e 0%,#1a6040 100%) !important;
+    color:#34d399 !important; border:1px solid #1a5a38 !important;
+}
+
+hr { border-color:#1e2d4a !important; margin:20px 0 !important; }
+</style>
+""", unsafe_allow_html=True)
+
+if not os.path.exists(DB_PATH):
+    crear_base_dades(DB_PATH)
+
+# =============================================================================
+# SIDEBAR
+# =============================================================================
+
+with st.sidebar:
+    st.markdown('<div class="sidebar-logo">🌍 EcoSim</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-sub">Simulador d\'ecosistemes</div>', unsafe_allow_html=True)
+    st.markdown("---")
+    seccio = st.radio("", ["🆕  Nou escenari","📂  Escenaris","🎛️  Simulació","📊  Gràfiques"], label_visibility="collapsed")
+
+    if 'escenari_actiu' in st.session_state:
+        st.markdown("---")
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("SELECT nom, estat FROM escenaris WHERE id=?", (st.session_state['escenari_actiu'],))
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            ecls = {"actiu":"tag-green","pausat":"tag-amber","finalitzat":"tag-red"}.get(row[1],"tag-blue")
+            st.markdown(f"""
+            <div style="padding:12px;background:#0d1829;border-radius:10px;border:1px solid #1e3050;">
+                <div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Escenari actiu</div>
+                <div style="font-size:0.9rem;color:#c9d4e8;font-weight:500;">{row[0]}</div>
+                <div style="margin-top:6px;"><span class="tag {ecls}">{row[1]}</span></div>
+            </div>""", unsafe_allow_html=True)
+
+# =============================================================================
+# NOU ESCENARI
+# =============================================================================
+
+if "🆕" in seccio:
+    st.markdown("# 🆕 Nou escenari")
+    st.markdown("Crea una nova simulació amb intel·ligència artificial o defineix-la manualment.")
+    st.markdown("---")
+
+    mode = st.radio("", ["🤖  Generar amb IA","✏️  Crear manualment"], horizontal=True, label_visibility="collapsed")
+
+    if "🤖" in mode:
+        c1, c2 = st.columns([2,1])
+        with c1:
+            st.markdown('<div class="sim-card">', unsafe_allow_html=True)
+            st.markdown("### Descriu el teu escenari")
+            tema = st.text_input("", placeholder="Ex: Bosc pirinenc afectat per la sequera...", label_visibility="collapsed")
+            context = st.text_area("Context addicional (opcional)", placeholder="Zona geogràfica, condicions especials, objectiu d'estudi...", height=80)
+            gen = st.button("🤖  Generar amb IA", type="primary", disabled=not tema)
+            st.markdown('</div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown("""
+            <div class="sim-card-green">
+                <div style="font-size:0.75rem;color:#1a6040;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Com funciona</div>
+                <div style="font-size:0.85rem;color:#5a9a78;line-height:1.6;">
+                    La IA genera automàticament variables, relacions i pesos científics. Pots revisar-ho tot i afegir les teves pròpies variables.
+                </div>
+            </div>""", unsafe_allow_html=True)
+
+        if gen:
+            with st.spinner("La IA analitza el tema i genera l'escenari científic..."):
+                agent = AgentIA()
+                escenari_ia = agent.generar_escenari(tema, context)
+            if escenari_ia:
+                st.session_state['escenari_ia'] = escenari_ia
+                st.session_state['tema_ia'] = tema
+            else:
+                st.error("Error generant l'escenari. Comprova la clau de Groq.")
+
+        if 'escenari_ia' in st.session_state:
+            ei = st.session_state['escenari_ia']
+            st.markdown("---")
+            st.markdown("## Revisa i confirma")
+
+            cc1, cc2, cc3 = st.columns([3,1,1])
+            with cc1:
+                nom = st.text_input("Nom de l'escenari", value=st.session_state.get('tema_ia',''))
+            with cc2:
+                unitat = st.selectbox("Unitat de temps", ["any","mes","dia","hora"],
+                                      index=["any","mes","dia","hora"].index(ei.get('unitat_temps','any')))
+            with cc3:
+                num_passos = st.number_input("Passos", min_value=1, max_value=200, value=ei.get('num_passos',10))
+            descripcio = st.text_area("Descripció", value=ei.get('descripcio',''), height=80)
+
+            cv1, cv2 = st.columns(2)
+            with cv1:
+                st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📌 Variables fixes</div>', unsafe_allow_html=True)
+                for v in ei.get('variables_fixes',[]):
+                    st.markdown(f'<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#0d1829;border-radius:8px;margin-bottom:4px;border:1px solid #1e3050;"><span style="color:#94b8d8;font-size:0.85rem;">📌 {v["nom"]}</span><span style="color:#2d5a8a;font-family:monospace;font-size:0.8rem;">{v["valor_inicial"]} {v.get("unitat","")}</span></div>', unsafe_allow_html=True)
+            with cv2:
+                st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">🔄 Variables dinàmiques</div>', unsafe_allow_html=True)
+                for v in ei.get('variables_dinamiques',[]):
+                    st.markdown(f'<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#0d1829;border-radius:8px;margin-bottom:4px;border:1px solid #1e3050;"><span style="color:#94b8d8;font-size:0.85rem;">🔄 {v["nom"]}</span><span style="color:#38bdf8;font-family:monospace;font-size:0.8rem;">{v["valor_inicial"]} {v.get("unitat","")}</span></div>', unsafe_allow_html=True)
+
+            st.markdown("---")
+            with st.expander("➕  Afegir variable pròpia"):
+                na, nb, nc = st.columns(3)
+                with na:
+                    nv_nom   = st.text_input("Nom", key="nv_nom")
+                    nv_tipus = st.selectbox("Tipus", ["dinamica","fixa"], key="nv_tipus")
+                with nb:
+                    nv_unit = st.text_input("Unitat", key="nv_unit")
+                    nv_val  = st.number_input("Valor inicial", key="nv_val")
+                with nc:
+                    nv_min = st.number_input("Valor mínim", key="nv_min")
+                    nv_max = st.number_input("Valor màxim", value=100.0, key="nv_max")
+                nv_notes = st.text_input("Descripció del comportament", key="nv_notes",
+                                          placeholder="Ex: crema tot el que té a menys d'1 metre")
+                if st.button("➕  Afegir"):
+                    nv = {"nom":nv_nom,"unitat":nv_unit,"valor_inicial":nv_val,"valor_min":nv_min,"valor_max":nv_max,"notes":nv_notes}
+                    key = 'variables_dinamiques' if nv_tipus == "dinamica" else 'variables_fixes'
+                    st.session_state['escenari_ia'][key].append(nv)
+                    st.rerun()
+
+            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">⚡ Relacions científiques</div>', unsafe_allow_html=True)
+            for r in ei.get('relacions',[]):
+                pcls  = "rel-pes-pos" if r['pes'] > 0 else "rel-pes-neg"
+                signe = "▲" if r['pes'] > 0 else "▼"
+                st.markdown(f'<div class="rel-row"><span class="rel-origen">{r["origen"]}</span><span style="color:#1e3050;">→</span><span class="rel-desti">{r["desti"]}</span><span class="{pcls}">{signe} {abs(r["pes"])}</span><span class="rel-desc">{r.get("descripcio","")}</span></div>', unsafe_allow_html=True)
+
+            st.markdown("---")
+            if st.button("💾  Guardar i activar escenari", type="primary"):
+                _guardar_escenari_ia(nom, descripcio, unitat, num_passos, ei)
+
+    else:
+        st.markdown('<div class="sim-card">', unsafe_allow_html=True)
+        st.markdown("### Defineix l'escenari manualment")
+        m1, m2 = st.columns(2)
+        with m1:
+            nom_m  = st.text_input("Nom de l'escenari")
+            tema_m = st.text_input("Tema")
+        with m2:
+            unitat_m = st.selectbox("Unitat de temps", ["any","mes","dia","hora"])
+            passos_m = st.number_input("Nombre de passos", min_value=1, max_value=200, value=10)
+        desc_m = st.text_area("Descripció i objectiu", height=100)
+        st.markdown('</div>', unsafe_allow_html=True)
+        if st.button("💾  Crear escenari buit", type="primary", disabled=not nom_m):
+            conn = sqlite3.connect(DB_PATH)
+            cur  = conn.cursor()
+            cur.execute("INSERT INTO escenaris (nom,tema,descripcio,unitat_temps,num_passos) VALUES (?,?,?,?,?)",
+                        (nom_m,tema_m,desc_m,unitat_m,passos_m))
+            conn.commit()
+            st.session_state['escenari_actiu'] = cur.lastrowid
+            conn.close()
+            st.success(f"Escenari '{nom_m}' creat!")
+
+# =============================================================================
+# ESCENARIS
+# =============================================================================
+
+elif "📂" in seccio:
+    st.markdown("# 📂 Escenaris guardats")
+    st.markdown("---")
+    conn = sqlite3.connect(DB_PATH)
+    cur  = conn.cursor()
+    cur.execute("SELECT id,nom,tema,estat,unitat_temps,num_passos,creat_el FROM escenaris ORDER BY creat_el DESC")
+    escenaris = cur.fetchall()
+    conn.close()
+
+    if not escenaris:
+        st.markdown('<div style="text-align:center;padding:60px 20px;color:#2d5a8a;"><div style="font-size:3rem;margin-bottom:16px;">🌱</div><div>Encara no hi ha escenaris.<br>Crea\'n un de nou!</div></div>', unsafe_allow_html=True)
+    else:
+        for esc in escenaris:
+            eid, nom, tema, estat, unitat, passos, creat = esc
+            ecls     = {"actiu":"tag-green","pausat":"tag-amber","finalitzat":"tag-red"}.get(estat,"tag-blue")
+            es_actiu = "✦ ACTIU" if st.session_state.get('escenari_actiu') == eid else ""
+            ci, cb   = st.columns([5,1])
+            with ci:
+                st.markdown(f"""
+                <div class="esc-card">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="esc-nom">{nom}</div>
+                        <span class="tag {ecls}">{estat}</span>
+                        <span style="font-size:0.7rem;color:#38bdf8;">{es_actiu}</span>
+                    </div>
+                    <div class="esc-tema">{tema}</div>
+                    <div class="esc-meta">{passos} {unitat}s &nbsp;·&nbsp; {creat[:10]}</div>
+                </div>""", unsafe_allow_html=True)
+            with cb:
+                st.markdown("<div style='margin-top:14px;'>", unsafe_allow_html=True)
+                if st.button("▶ Carregar", key=f"load_{eid}"):
+                    st.session_state['escenari_actiu'] = eid
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
+# =============================================================================
+# SIMULACIÓ
+# =============================================================================
+
+elif "🎛️" in seccio:
+    st.markdown("# 🎛️ Panell de simulació")
+
+    if 'escenari_actiu' not in st.session_state:
+        st.markdown('<div style="text-align:center;padding:60px 20px;color:#2d5a8a;"><div style="font-size:3rem;margin-bottom:16px;">⚡</div><div>Cap escenari actiu.<br>Ves a 📂 Escenaris i carrega\'n un.</div></div>', unsafe_allow_html=True)
+    else:
+        eid = st.session_state['escenari_actiu']
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cur  = conn.cursor()
+        cur.execute("SELECT * FROM escenaris WHERE id=?", (eid,))
+        esc  = dict(cur.fetchone())
+        cur.execute("SELECT * FROM variables WHERE escenari_id=?", (eid,))
+        variables = [dict(r) for r in cur.fetchall()]
+        conn.close()
+
+        ecls = {"actiu":"tag-green","pausat":"tag-amber","finalitzat":"tag-red"}.get(esc['estat'],"tag-blue")
+        st.markdown(f"""
+        <div class="sim-card">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+                <div>
+                    <div style="font-size:1.4rem;font-weight:600;color:#e8f4fd;font-family:'Space Mono',monospace;">{esc['nom']}</div>
+                    <div style="color:#4a6a8a;font-size:0.85rem;margin-top:4px;">{esc['tema']}</div>
+                </div>
+                <span class="tag {ecls}">{esc['estat']}</span>
+            </div>
+            <div style="display:flex;gap:24px;margin-top:14px;">
+                <div><span style="color:#2d5a8a;font-size:0.7rem;text-transform:uppercase;">Passos</span><br><span style="color:#38bdf8;font-family:'Space Mono',monospace;">{esc['num_passos']}</span></div>
+                <div><span style="color:#2d5a8a;font-size:0.7rem;text-transform:uppercase;">Unitat</span><br><span style="color:#38bdf8;font-family:'Space Mono',monospace;">{esc['unitat_temps']}</span></div>
+                <div><span style="color:#2d5a8a;font-size:0.7rem;text-transform:uppercase;">Variables</span><br><span style="color:#38bdf8;font-family:'Space Mono',monospace;">{len(variables)}</span></div>
+            </div>
+        </div>""", unsafe_allow_html=True)
+
+        if esc.get('descripcio'):
+            with st.expander("📋 Descripció"):
+                st.write(esc['descripcio'])
+
+        fixes = [v for v in variables if v['tipus_var']=='fixa']
+        if fixes:
+            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">📌 Variables fixes</div>', unsafe_allow_html=True)
+            cfs = st.columns(len(fixes))
+            for i, v in enumerate(fixes):
+                cfs[i].markdown(f'<div class="metric-box"><div class="metric-value">{v["valor_inicial"]}</div><div class="metric-unit">{v.get("unitat","")}</div><div class="metric-label">{v["nom"]}</div></div>', unsafe_allow_html=True)
+
+        dinamiques = [v for v in variables if v['tipus_var']=='dinamica']
+        if dinamiques:
+            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:20px 0 10px;">🎛️ Variables dinàmiques</div>', unsafe_allow_html=True)
+            cds = st.columns(2)
+            for i, v in enumerate(dinamiques):
+                with cds[i%2]:
+                    vmin = float(v['valor_min']) if v['valor_min'] is not None else 0.0
+                    vmax = float(v['valor_max']) if v['valor_max'] is not None else 100.0
+                    st.slider(f"{v['nom']} ({v.get('unitat','')})", min_value=vmin, max_value=vmax,
+                              value=float(v['valor_inicial']), key=f"sl_{v['id']}")
+
+        st.markdown("---")
+        ba, bb, bc = st.columns(3)
+        with ba:
+            if st.button("▶️  Simular tot", type="primary"):
+                with st.spinner("Executant simulació..."):
+                    m = MotorSimulacio(escenari_id=eid, db_path=DB_PATH)
+                    m.carregar()
+                    m.simular_tot()
+                st.success("✅ Simulació completada! Ves a 📊 Gràfiques.")
+        with bb:
+            if st.button("⏭️  Avançar un pas"):
+                if 'motor_pas' not in st.session_state:
+                    st.session_state['motor_pas'] = MotorSimulacio(escenari_id=eid, db_path=DB_PATH)
+                    st.session_state['motor_pas'].carregar()
+                ok = st.session_state['motor_pas'].calcular_pas()
+                if ok: st.rerun()
+                else:  st.info("Simulació finalitzada.")
+        with bc:
+            if st.button("↺  Reiniciar"):
+                if 'motor_pas' in st.session_state: del st.session_state['motor_pas']
+                conn2 = sqlite3.connect(DB_PATH)
+                conn2.execute("DELETE FROM historial_valors WHERE escenari_id=?", (eid,))
+                conn2.commit(); conn2.close()
+                st.rerun()
+
+        st.markdown("---")
+        st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📝 Notes de sessió</div>', unsafe_allow_html=True)
+        nova_nota = st.text_area("", height=80, placeholder="Què has provat? Què has observat?", label_visibility="collapsed")
+        if st.button("💾  Guardar nota"):
+            if nova_nota.strip():
+                conn3 = sqlite3.connect(DB_PATH)
+                conn3.execute("INSERT INTO notes_escenari (escenari_id,nota) VALUES (?,?)", (eid, nova_nota))
+                conn3.commit(); conn3.close()
+                st.success("Nota guardada!")
+
+        conn4 = sqlite3.connect(DB_PATH)
+        cur4  = conn4.cursor()
+        cur4.execute("SELECT registrat_el,nota FROM notes_escenari WHERE escenari_id=? ORDER BY registrat_el DESC LIMIT 5", (eid,))
+        notes = cur4.fetchall(); conn4.close()
+        if notes:
+            with st.expander(f"📖 Notes anteriors ({len(notes)})"):
+                for data, nota in notes:
+                    st.markdown(f'<div style="padding:8px 12px;background:#0d1829;border-left:3px solid #1e4a7a;border-radius:0 6px 6px 0;margin-bottom:6px;"><div style="font-size:0.7rem;color:#2d5a8a;margin-bottom:2px;font-family:monospace;">{data}</div><div style="font-size:0.85rem;color:#94b8d8;">{nota}</div></div>', unsafe_allow_html=True)
+
+# =============================================================================
+# GRÀFIQUES
+# =============================================================================
+
+elif "📊" in seccio:
+    st.markdown("# 📊 Evolució de la simulació")
+
+    if 'escenari_actiu' not in st.session_state:
+        st.markdown('<div style="text-align:center;padding:60px 20px;color:#2d5a8a;"><div style="font-size:3rem;margin-bottom:16px;">📊</div><div>Cap escenari actiu.</div></div>', unsafe_allow_html=True)
+    else:
+        eid = st.session_state['escenari_actiu']
+        conn = sqlite3.connect(DB_PATH)
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT h.pas, v.nom, h.valor, v.unitat
+            FROM historial_valors h JOIN variables v ON h.variable_id=v.id
+            WHERE h.escenari_id=? AND v.tipus_var='dinamica'
+            ORDER BY h.pas ASC
+        """, (eid,))
+        dades = cur.fetchall()
+        cur.execute("SELECT nom, unitat_temps FROM escenaris WHERE id=?", (eid,))
+        info  = cur.fetchone()
+        conn.close()
+
+        if not dades:
+            st.markdown('<div style="text-align:center;padding:60px 20px;color:#2d5a8a;"><div style="font-size:3rem;margin-bottom:16px;">⏳</div><div>Encara no hi ha dades.<br>Executa la simulació primer!</div></div>', unsafe_allow_html=True)
+        else:
+            df   = pd.DataFrame(dades, columns=['pas','variable','valor','unitat'])
+            vars_disp = df['variable'].unique().tolist()
+
+            cs, ci = st.columns([3,1])
+            with cs:
+                sel = st.multiselect("Variables a mostrar", vars_disp, default=vars_disp[:4])
+            with ci:
+                st.markdown(f'<div class="metric-box" style="margin-top:8px;"><div class="metric-value">{df["pas"].max()}</div><div class="metric-unit">{info[1] if info else ""}s</div><div class="metric-label">{info[0] if info else ""}</div></div>', unsafe_allow_html=True)
+
+            if sel:
+                colors = ['#38bdf8','#34d399','#fbbf24','#f87171','#a78bfa','#fb923c','#22d3ee','#86efac']
+                fig = go.Figure()
+                for i, var in enumerate(sel):
+                    dv = df[df['variable']==var]
+                    fig.add_trace(go.Scatter(
+                        x=dv['pas'], y=dv['valor'], name=var,
+                        mode='lines+markers',
+                        line=dict(color=colors[i % len(colors)], width=2),
+                        marker=dict(size=5),
+                        hovertemplate=f"<b>{var}</b><br>Pas %{{x}}<br>%{{y:.2f}}<extra></extra>"
+                    ))
+                fig.update_layout(
+                    paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='#080d1a',
+                    font=dict(color='#8fa3c4', family='DM Sans'),
+                    xaxis=dict(title=f"Pas ({info[1] if info else 'temps'})", gridcolor='#0d1829', linecolor='#1e3050', tickfont=dict(color='#4a6a8a')),
+                    yaxis=dict(title="Valor", gridcolor='#0d1829', linecolor='#1e3050', tickfont=dict(color='#4a6a8a')),
+                    legend=dict(bgcolor='#0d1829', bordercolor='#1e3050', borderwidth=1, font=dict(color='#8fa3c4')),
+                    hovermode='x unified', height=420,
+                    margin=dict(l=10,r=10,t=20,b=10)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+                st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">Valors finals</div>', unsafe_allow_html=True)
+                ultim = df['pas'].max()
+                df_f  = df[df['pas']==ultim][['variable','valor','unitat']].copy()
+                df_f.columns = ['Variable','Valor final','Unitat']
+                df_f['Valor final'] = df_f['Valor final'].round(2)
+                st.dataframe(df_f, use_container_width=True, hide_index=True)
+
+
+# =============================================================================
+# FUNCIÓ AUXILIAR
+# =============================================================================
+
+def _guardar_escenari_ia(nom, descripcio, unitat, num_passos, ei):
+    conn = sqlite3.connect(DB_PATH)
+    cur  = conn.cursor()
+    cur.execute("PRAGMA foreign_keys=ON;")
+    cur.execute("INSERT INTO escenaris (nom,tema,descripcio,unitat_temps,num_passos) VALUES (?,?,?,?,?)",
+                (nom, nom, descripcio, unitat, num_passos))
+    eid = cur.lastrowid
+    vids = {}
+    for v in ei.get('variables_fixes',[]):
+        cur.execute("INSERT INTO variables (escenari_id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max,notes) VALUES (?,?,'fixa',?,?,?,?,?)",
+                    (eid,v['nom'],v.get('unitat',''),v['valor_inicial'],v.get('valor_min',0),v.get('valor_max',100),v.get('notes','')))
+        vids[v['nom']] = cur.lastrowid
+    for v in ei.get('variables_dinamiques',[]):
+        cur.execute("INSERT INTO variables (escenari_id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max,notes) VALUES (?,?,'dinamica',?,?,?,?,?)",
+                    (eid,v['nom'],v.get('unitat',''),v['valor_inicial'],v.get('valor_min',0),v.get('valor_max',100),v.get('notes','')))
+        vids[v['nom']] = cur.lastrowid
+    for r in ei.get('relacions',[]):
+        orig = vids.get(r['origen'])
+        dest = vids.get(r['desti'])
+        if orig and dest:
+            cur.execute("INSERT INTO relacions (escenari_id,variable_origen_id,variable_desti_id,pes,descripcio,generada_per_ia) VALUES (?,?,?,?,?,1)",
+                        (eid,orig,dest,r['pes'],r.get('descripcio','')))
+    conn.commit(); conn.close()
+    st.success(f"✅ Escenari '{nom}' guardat correctament!")
+    st.session_state['escenari_actiu'] = eid
+    if 'escenari_ia' in st.session_state: del st.session_state['escenari_ia']
+    st.rerun()
