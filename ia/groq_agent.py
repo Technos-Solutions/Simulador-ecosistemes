@@ -8,7 +8,13 @@ from groq import Groq
 
 # La clau API es llegeix de la variable d'entorn GROQ_API_KEY
 # Per configurar-la: set GROQ_API_KEY=la_teva_clau (Windows)
-GROQ_API_KEY = os.environ.get("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", "")
+import streamlit as st
+
+try:
+    GROQ_API_KEY = st.secrets["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"]
+except Exception:
+    GROQ_API_KEY = os.environ.get("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", "")
+GROQ_API_KEY = os.environ.get("", "")
 MODEL = "llama3-70b-8192"
 
 
