@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-numpy
-scipy
-streamlit
-plotly
-groq
-=======
-numpy
-scipy
-streamlit
-plotly
-groq
->>>>>>> 3c024d57b9abaf2a27a7e28eaa6ee1dc1910a10c
+streamlit>=1.32.0
+plotly>=5.20.0
+pandas>=2.0.0
+groq>=0.5.0
+numpy>=1.26.0
+scipy>=1.11.0
