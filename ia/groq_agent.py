@@ -8,7 +8,7 @@ from groq import Groq
 
 # La clau API es llegeix de la variable d'entorn GROQ_API_KEY
 # Per configurar-la: set GROQ_API_KEY=la_teva_clau (Windows)
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_API_KEY = os.environ.get("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", "")
 MODEL = "llama3-70b-8192"
 
 
