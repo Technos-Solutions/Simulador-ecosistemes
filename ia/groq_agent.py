@@ -11,9 +11,9 @@ from groq import Groq
 import streamlit as st
 
 try:
-    GROQ_API_KEY = st.secrets["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"]
+    GROQ_API_KEY = st.secrets[""]
 except Exception:
-    GROQ_API_KEY = os.environ.get("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", "")
+    GROQ_API_KEY = os.environ.get("", "")
 GROQ_API_KEY = os.environ.get("", "")
 MODEL = "llama3-70b-8192"
 
