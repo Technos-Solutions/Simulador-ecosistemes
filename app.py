@@ -20,7 +20,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
+CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
@@ -36,7 +36,7 @@ h3 { color:#94b8d8 !important; font-weight:500 !important; }
 .metric-box { background:#0d1829; border:1px solid #1e3050; border-radius:10px; padding:14px 18px; text-align:center; }
 .metric-value { font-family:'Space Mono',monospace; font-size:1.6rem; color:#38bdf8; font-weight:700; line-height:1.2; }
 .metric-label { font-size:0.75rem; color:#4a6a8a; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
-.metric-unit  { font-size:0.75rem; color:#2d7ab0; font-family:'Space Mono',monospace; }
+.metric-unit { font-size:0.75rem; color:#2d7ab0; font-family:'Space Mono',monospace; }
 .tag { display:inline-block; padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; }
 .tag-green { background:#0a2e18; color:#34d399; border:1px solid #0f4a28; }
 .tag-blue  { background:#071830; color:#60a5fa; border:1px solid #0f2d5a; }
@@ -62,7 +62,8 @@ h3 { color:#94b8d8 !important; font-weight:500 !important; }
 .stButton > button[kind="primary"] { background:linear-gradient(135deg,#0f4a2e 0%,#1a6040 100%) !important; color:#34d399 !important; border:1px solid #1a5a38 !important; }
 hr { border-color:#1e2d4a !important; margin:20px 0 !important; }
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(CSS, unsafe_allow_html=True)
 
 if not os.path.exists(DB_PATH):
     crear_base_dades(DB_PATH)
@@ -88,7 +89,6 @@ def _guardar_escenari_ia(nom, descripcio, unitat, num_passos, ei):
         cur.execute("INSERT INTO variables (escenari_id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max,notes) VALUES (?,?,'dinamica',?,?,?,?,?)",
                     (eid,v['nom'],v.get('unitat',''),v['valor_inicial'],v.get('valor_min',0),v.get('valor_max',100),v.get('notes','')))
         vids[v['nom']] = cur.lastrowid
-    # Cerca flexible: ignora majúscules i espais
     vids_norm = {k.lower().strip(): v for k, v in vids.items()}
     for r in ei.get('relacions', []):
         orig = vids_norm.get(r['origen'].lower().strip())
@@ -121,7 +121,6 @@ def _guardar_escenari_assistit(cfg, pm):
         cur.execute("INSERT INTO variables (escenari_id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max,notes) VALUES (?,?,'dinamica',?,?,?,?,?)",
                     (eid,v['nom'],v.get('unitat',''),v['valor_inicial'],v.get('valor_min',0),v.get('valor_max',100),v.get('notes','')))
         vids[v['nom']] = cur.lastrowid
-    # Cerca flexible: ignora majúscules i espais
     vids_norm = {k.lower().strip(): v for k, v in vids.items()}
     for r in pm.get('relacions', []):
         orig = vids_norm.get(r['origen'].lower().strip())
@@ -147,7 +146,13 @@ with st.sidebar:
     st.markdown('<div class="sidebar-logo">🌍 EcoSim</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-sub">Simulador d\'ecosistemes</div>', unsafe_allow_html=True)
     st.markdown("---")
-    seccio = st.radio("", ["🆕  Nou escenari","📂  Escenaris","🎛️  Simulació","📊  Gràfiques"], label_visibility="collapsed")
+    seccio = st.radio("", [
+        "🆕  Nou escenari",
+        "📂  Escenaris",
+        "✏️  Variables",
+        "🎛️  Simulació",
+        "📊  Gràfiques"
+    ], label_visibility="collapsed")
 
     if 'escenari_actiu' in st.session_state:
         st.markdown("---")
@@ -170,14 +175,14 @@ with st.sidebar:
 # =============================================================================
 
 if "🆕" in seccio:
+    for k in ['escenari_ia','tema_ia','proposta_manual','config_manual']:
+        if k in st.session_state: del st.session_state[k]
+
     st.markdown("# 🆕 Nou escenari")
     st.markdown("Crea una nova simulació en mode automàtic o assistit.")
     st.markdown("---")
+    mode = st.radio("Selecciona el mode de creació", ["🤖  Automàtic (IA genera tot)","🔬  Assistit (tu controles, IA ajuda)"], horizontal=True)
 
-    mode = st.radio("Selecciona el mode de creació", ["🤖  Automàtic (IA genera tot)","🔬  Assistit (tu controles, IA ajuda)"],
-                    horizontal=True)
-
-    # --- MODE AUTOMÀTIC ---
     if "🤖" in mode:
         c1, c2 = st.columns([2,1])
         with c1:
@@ -186,7 +191,7 @@ if "🆕" in seccio:
             context = st.text_area("Context addicional (opcional)", placeholder="Zona geogràfica, condicions especials...", height=80)
             gen     = st.button("🤖  Generar amb IA", type="primary", disabled=not tema)
         with c2:
-            st.markdown('<div class="sim-card-green"><div style="font-size:0.75rem;color:#1a6040;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Mode automàtic</div><div style="font-size:0.85rem;color:#5a9a78;line-height:1.6;">La IA genera automàticament variables, relacions i pesos científics. Ideal per sistemes reals coneguts.</div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="sim-card-green"><div style="font-size:0.75rem;color:#1a6040;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Mode automàtic</div><div style="font-size:0.85rem;color:#5a9a78;line-height:1.6;">La IA genera automàticament variables, relacions i pesos científics.</div></div>', unsafe_allow_html=True)
 
         if gen:
             with st.spinner("La IA genera l'escenari científic..."):
@@ -203,13 +208,9 @@ if "🆕" in seccio:
             st.markdown("---")
             st.markdown("## Revisa i confirma")
             cc1, cc2, cc3 = st.columns([3,1,1])
-            with cc1:
-                nom = st.text_input("Nom de l'escenari", value=st.session_state.get('tema_ia',''))
-            with cc2:
-                unitat = st.selectbox("Unitat de temps", ["any","mes","dia","hora"],
-                                      index=["any","mes","dia","hora"].index(ei.get('unitat_temps','any')))
-            with cc3:
-                num_passos = st.number_input("Passos", min_value=1, max_value=200, value=int(ei.get('num_passos',10)))
+            with cc1: nom = st.text_input("Nom de l'escenari", value=st.session_state.get('tema_ia',''))
+            with cc2: unitat = st.selectbox("Unitat de temps", ["any","mes","dia","hora"], index=["any","mes","dia","hora"].index(ei.get('unitat_temps','any')))
+            with cc3: num_passos = st.number_input("Passos", min_value=1, max_value=200, value=int(ei.get('num_passos',10)))
             descripcio = st.text_area("Descripció", value=ei.get('descripcio',''), height=80)
 
             cv1, cv2 = st.columns(2)
@@ -250,7 +251,6 @@ if "🆕" in seccio:
             if st.button("💾  Guardar i activar escenari", type="primary"):
                 _guardar_escenari_ia(nom, descripcio, unitat, num_passos, ei)
 
-    # --- MODE ASSISTIT ---
     else:
         c1, c2 = st.columns([2,1])
         with c1:
@@ -259,14 +259,11 @@ if "🆕" in seccio:
             tema_m = st.text_input("Tema", placeholder="Ex: Contaminació a una zona industrial...")
             desc_m = st.text_area("Descripció i objectiu", height=80)
             ma2, mb2 = st.columns(2)
-            with ma2:
-                unitat_m = st.selectbox("Unitat de temps", ["any","mes","dia","hora"])
-            with mb2:
-                passos_m = st.number_input("Passos", min_value=1, max_value=200, value=10)
-            gen_m = st.button("🔬  Proposar variables i relacions amb IA", type="primary",
-                               disabled=not (nom_m and tema_m))
+            with ma2: unitat_m = st.selectbox("Unitat de temps", ["any","mes","dia","hora"])
+            with mb2: passos_m = st.number_input("Passos", min_value=1, max_value=200, value=10)
+            gen_m = st.button("🔬  Proposar variables i relacions amb IA", type="primary", disabled=not (nom_m and tema_m))
         with c2:
-            st.markdown('<div class="sim-card-amber"><div style="font-size:0.75rem;color:#7a5a00;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Mode assistit</div><div style="font-size:0.85rem;color:#a07830;line-height:1.6;">La IA proposa variables i relacions. Tu pots esborrar les que no vols, modificar valors i afegir les teves pròpies.</div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="sim-card-amber"><div style="font-size:0.75rem;color:#7a5a00;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Mode assistit</div><div style="font-size:0.85rem;color:#a07830;line-height:1.6;">La IA proposa variables i relacions. Tu pots esborrar les que no vols i afegir les teves pròpies.</div></div>', unsafe_allow_html=True)
 
         if gen_m:
             with st.spinner("La IA proposa variables i relacions..."):
@@ -274,10 +271,7 @@ if "🆕" in seccio:
                 prop_ia = agent.generar_escenari(tema_m, desc_m)
             if prop_ia:
                 st.session_state['proposta_manual'] = prop_ia
-                st.session_state['config_manual']   = {
-                    'nom':nom_m,'tema':tema_m,'desc':desc_m,
-                    'unitat':unitat_m,'passos':passos_m
-                }
+                st.session_state['config_manual']   = {'nom':nom_m,'tema':tema_m,'desc':desc_m,'unitat':unitat_m,'passos':passos_m}
             else:
                 st.error("Error generant la proposta. Comprova la clau de Groq.")
 
@@ -286,37 +280,34 @@ if "🆕" in seccio:
             cfg = st.session_state.get('config_manual',{})
             st.markdown("---")
             st.markdown("## ✏️ Revisa i modifica")
-            st.markdown('<div class="sim-card-amber"><div style="font-size:0.8rem;color:#a07830;line-height:1.6;">🔬 Esborra les variables o relacions que no necessites, modifica els valors i afegeix les teves pròpies.</div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="sim-card-amber"><div style="font-size:0.8rem;color:#a07830;line-height:1.6;">🔬 Esborra el que no necessites i afegeix les teves pròpies variables abans de guardar.</div></div>', unsafe_allow_html=True)
 
-            # Variables fixes
-            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📌 Variables fixes</div>', unsafe_allow_html=True)
             fixes_del = []
+            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📌 Variables fixes</div>', unsafe_allow_html=True)
             for i, v in enumerate(pm.get('variables_fixes',[])):
                 cf1, cf2, cf3, cf4 = st.columns([3,1,1,0.4])
                 with cf1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">📌 {v["nom"]} <span style="color:#2d5a8a;font-size:0.75rem;">({v.get("unitat","")})</span></div>', unsafe_allow_html=True)
                 with cf2: st.markdown(f'<div style="padding:8px 0;color:#38bdf8;font-family:monospace;font-size:0.8rem;">{v["valor_inicial"]}</div>', unsafe_allow_html=True)
-                with cf3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">[{v.get("valor_min",0)} - {v.get("valor_max",100)}]</div>', unsafe_allow_html=True)
+                with cf3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">[{v.get("valor_min",0)}-{v.get("valor_max",100)}]</div>', unsafe_allow_html=True)
                 with cf4:
                     if st.button("🗑", key=f"df_{i}"): fixes_del.append(i)
             if fixes_del:
                 for i in sorted(fixes_del, reverse=True): st.session_state['proposta_manual']['variables_fixes'].pop(i)
                 st.rerun()
 
-            # Variables dinàmiques
-            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:12px 0 8px;">🔄 Variables dinàmiques</div>', unsafe_allow_html=True)
             dins_del = []
+            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:12px 0 8px;">🔄 Variables dinàmiques</div>', unsafe_allow_html=True)
             for i, v in enumerate(pm.get('variables_dinamiques',[])):
                 cd1, cd2, cd3, cd4 = st.columns([3,1,1,0.4])
                 with cd1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">🔄 {v["nom"]} <span style="color:#2d5a8a;font-size:0.75rem;">({v.get("unitat","")})</span></div>', unsafe_allow_html=True)
                 with cd2: st.markdown(f'<div style="padding:8px 0;color:#38bdf8;font-family:monospace;font-size:0.8rem;">{v["valor_inicial"]}</div>', unsafe_allow_html=True)
-                with cd3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">[{v.get("valor_min",0)} - {v.get("valor_max",100)}]</div>', unsafe_allow_html=True)
+                with cd3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">[{v.get("valor_min",0)}-{v.get("valor_max",100)}]</div>', unsafe_allow_html=True)
                 with cd4:
                     if st.button("🗑", key=f"dd_{i}"): dins_del.append(i)
             if dins_del:
                 for i in sorted(dins_del, reverse=True): st.session_state['proposta_manual']['variables_dinamiques'].pop(i)
                 st.rerun()
 
-            # Afegir variable pròpia
             with st.expander("➕  Afegir variable pròpia"):
                 ma3, mb3, mc3 = st.columns(3)
                 with ma3:
@@ -328,16 +319,15 @@ if "🆕" in seccio:
                 with mc3:
                     mv_min = st.number_input("Valor mínim", key="mv_min")
                     mv_max = st.number_input("Valor màxim", value=100.0, key="mv_max")
-                mv_notes = st.text_input("Descripció", key="mv_notes", placeholder="Ex: crema tot el que té a menys d'1 metre")
+                mv_notes = st.text_input("Descripció", key="mv_notes")
                 if st.button("➕  Afegir variable") and mv_nom:
                     nv  = {"nom":mv_nom,"unitat":mv_unit,"valor_inicial":mv_val,"valor_min":mv_min,"valor_max":mv_max,"notes":mv_notes}
                     key = 'variables_dinamiques' if mv_tipus=="dinamica" else 'variables_fixes'
                     st.session_state['proposta_manual'][key].append(nv)
                     st.rerun()
 
-            # Relacions
-            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">⚡ Relacions proposades</div>', unsafe_allow_html=True)
             rels_del = []
+            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">⚡ Relacions proposades</div>', unsafe_allow_html=True)
             for i, r in enumerate(pm.get('relacions',[])):
                 cr1, cr2 = st.columns([5,0.4])
                 with cr1:
@@ -386,7 +376,7 @@ elif "📂" in seccio:
                 st.markdown("</div>", unsafe_allow_html=True)
             with cd:
                 st.markdown("<div style='margin-top:14px;'>", unsafe_allow_html=True)
-                if st.button("🗑 Esborrar", key=f"del_{eid}"):
+                if st.button("🗑", key=f"del_{eid}"):
                     conn_d = sqlite3.connect(DB_PATH)
                     conn_d.execute("PRAGMA foreign_keys=ON;")
                     conn_d.execute("DELETE FROM escenaris WHERE id=?", (eid,))
@@ -396,6 +386,135 @@ elif "📂" in seccio:
                         del st.session_state['escenari_actiu']
                     st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
+
+
+# =============================================================================
+# VARIABLES I RELACIONS (editor complet)
+# =============================================================================
+
+elif "✏️" in seccio:
+    st.markdown("# ✏️ Variables i relacions")
+
+    if 'escenari_actiu' not in st.session_state:
+        st.markdown('<div style="text-align:center;padding:60px 20px;color:#2d5a8a;"><div style="font-size:3rem;margin-bottom:16px;">✏️</div><div>Cap escenari actiu.<br>Carrega un escenari primer.</div></div>', unsafe_allow_html=True)
+    else:
+        eid = st.session_state['escenari_actiu']
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cur  = conn.cursor()
+        cur.execute("SELECT nom, tema FROM escenaris WHERE id=?", (eid,))
+        esc_info = cur.fetchone()
+        cur.execute("SELECT id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max FROM variables WHERE escenari_id=? ORDER BY tipus_var,nom", (eid,))
+        variables = [dict(r) for r in cur.fetchall()]
+        cur.execute("""SELECT r.id, v1.nom as origen, v2.nom as desti, r.pes, r.descripcio
+                       FROM relacions r
+                       JOIN variables v1 ON r.variable_origen_id=v1.id
+                       JOIN variables v2 ON r.variable_desti_id=v2.id
+                       WHERE r.escenari_id=? ORDER BY v1.nom""", (eid,))
+        relacions = [dict(r) for r in cur.fetchall()]
+        conn.close()
+
+        st.markdown(f'<div class="sim-card"><div style="font-size:1.2rem;font-weight:600;color:#e8f4fd;font-family:\'Space Mono\',monospace;">{esc_info["nom"]}</div><div style="color:#4a6a8a;font-size:0.85rem;margin-top:4px;">{esc_info["tema"]}</div><div style="display:flex;gap:20px;margin-top:12px;"><div><span style="color:#2d5a8a;font-size:0.7rem;text-transform:uppercase;">Variables</span><br><span style="color:#38bdf8;font-family:\'Space Mono\',monospace;">{len(variables)}</span></div><div><span style="color:#2d5a8a;font-size:0.7rem;text-transform:uppercase;">Relacions</span><br><span style="color:#38bdf8;font-family:\'Space Mono\',monospace;">{len(relacions)}</span></div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sim-card-amber"><div style="font-size:0.85rem;color:#a07830;line-height:1.6;">🔬 Aquí pots calibrar el teu escenari. Si els resultats de la simulació no van cap a on esperes, ajusta els pesos de les relacions, modifica els valors de les variables o afegeix elements que falten.</div></div>', unsafe_allow_html=True)
+
+        tab1, tab2 = st.tabs(["📊 Variables", "⚡ Relacions"])
+
+        # --- TAB VARIABLES ---
+        with tab1:
+            st.markdown("#### Variables actuals")
+            for v in variables:
+                icona = "📌" if v['tipus_var']=='fixa' else "🔄"
+                cv1, cv2, cv3, cv4, cv5 = st.columns([3,1,1,1,0.5])
+                with cv1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">{icona} {v["nom"]} <span style="color:#2d5a8a;font-size:0.75rem;">({v.get("unitat","")})</span></div>', unsafe_allow_html=True)
+                with cv2: st.markdown(f'<div style="padding:8px 0;color:#38bdf8;font-family:monospace;font-size:0.8rem;">Val: {v["valor_inicial"]}</div>', unsafe_allow_html=True)
+                with cv3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">Min: {v["valor_min"] or 0}</div>', unsafe_allow_html=True)
+                with cv4: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">Max: {v["valor_max"] or 100}</div>', unsafe_allow_html=True)
+                with cv5:
+                    if st.button("🗑", key=f"dvar_{v['id']}"):
+                        conn_dv = sqlite3.connect(DB_PATH)
+                        conn_dv.execute("PRAGMA foreign_keys=ON;")
+                        conn_dv.execute("DELETE FROM variables WHERE id=?", (v['id'],))
+                        conn_dv.commit()
+                        conn_dv.close()
+                        st.rerun()
+
+            st.markdown("---")
+            st.markdown("#### ➕ Afegir nova variable")
+            va1, va2, va3 = st.columns(3)
+            with va1:
+                av_nom   = st.text_input("Nom de la variable", key="av_nom")
+                av_tipus = st.selectbox("Tipus", ["dinamica","fixa"], key="av_tipus")
+            with va2:
+                av_unit = st.text_input("Unitat", key="av_unit", placeholder="°C, mm/any, %...")
+                av_val  = st.number_input("Valor inicial", key="av_val")
+            with va3:
+                av_min = st.number_input("Valor mínim", key="av_min")
+                av_max = st.number_input("Valor màxim", value=100.0, key="av_max")
+            av_notes = st.text_input("Notes (opcional)", key="av_notes")
+            if st.button("➕  Afegir variable", type="primary") and av_nom:
+                conn_av = sqlite3.connect(DB_PATH)
+                conn_av.execute("INSERT INTO variables (escenari_id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max,notes) VALUES (?,?,?,?,?,?,?,?)",
+                                (eid,av_nom,av_tipus,av_unit,av_val,av_min,av_max,av_notes))
+                conn_av.commit()
+                conn_av.close()
+                st.success(f"Variable '{av_nom}' afegida!")
+                st.rerun()
+
+        # --- TAB RELACIONS ---
+        with tab2:
+            st.markdown("#### Relacions actuals")
+            if not relacions:
+                st.warning("Aquest escenari no té relacions. Afegeix-ne per que la simulació evolucioni.")
+            else:
+                for r in relacions:
+                    pcls  = "rel-pes-pos" if r['pes']>0 else "rel-pes-neg"
+                    signe = "▲" if r['pes']>0 else "▼"
+                    cr1, cr2, cr3 = st.columns([4,1,0.5])
+                    with cr1:
+                        st.markdown(f'<div class="rel-row"><span class="rel-origen">{r["origen"]}</span><span style="color:#1e3050;">→</span><span class="rel-desti">{r["desti"]}</span><span class="{pcls}">{signe} {abs(r["pes"])}</span></div>', unsafe_allow_html=True)
+                    with cr2:
+                        nou_pes = st.number_input("Pes", min_value=-1.0, max_value=1.0, value=float(r['pes']), step=0.1, key=f"pes_{r['id']}", label_visibility="collapsed")
+                        if nou_pes != r['pes']:
+                            conn_rp = sqlite3.connect(DB_PATH)
+                            conn_rp.execute("UPDATE relacions SET pes=? WHERE id=?", (nou_pes, r['id']))
+                            conn_rp.commit()
+                            conn_rp.close()
+                            st.rerun()
+                    with cr3:
+                        if st.button("🗑", key=f"drel_{r['id']}"):
+                            conn_dr = sqlite3.connect(DB_PATH)
+                            conn_dr.execute("DELETE FROM relacions WHERE id=?", (r['id'],))
+                            conn_dr.commit()
+                            conn_dr.close()
+                            st.rerun()
+
+            st.markdown("---")
+            st.markdown("#### ➕ Afegir nova relació")
+            noms_vars = [v['nom'] for v in variables]
+            if len(noms_vars) >= 2:
+                ra1, ra2, ra3 = st.columns(3)
+                with ra1: ar_orig = st.selectbox("Variable origen", noms_vars, key="ar_orig")
+                with ra2: ar_dest = st.selectbox("Variable destí", noms_vars, key="ar_dest")
+                with ra3: ar_pes  = st.number_input("Pes (-1 a +1)", min_value=-1.0, max_value=1.0, value=0.5, step=0.1, key="ar_pes")
+                ar_desc = st.text_input("Descripció de la relació", key="ar_desc", placeholder="Ex: Temperatura alta redueix la humitat del sòl")
+                if st.button("➕  Afegir relació", type="primary"):
+                    conn_ar = sqlite3.connect(DB_PATH)
+                    cur_ar  = conn_ar.cursor()
+                    cur_ar.execute("SELECT id FROM variables WHERE escenari_id=? AND nom=?", (eid, ar_orig))
+                    orig_id = cur_ar.fetchone()
+                    cur_ar.execute("SELECT id FROM variables WHERE escenari_id=? AND nom=?", (eid, ar_dest))
+                    dest_id = cur_ar.fetchone()
+                    if orig_id and dest_id and ar_orig != ar_dest:
+                        cur_ar.execute("INSERT INTO relacions (escenari_id,variable_origen_id,variable_desti_id,pes,descripcio) VALUES (?,?,?,?,?)",
+                                       (eid, orig_id[0], dest_id[0], ar_pes, ar_desc))
+                        conn_ar.commit()
+                        st.success("Relació afegida!")
+                    else:
+                        st.error("Selecciona dues variables diferents.")
+                    conn_ar.close()
+                    st.rerun()
+            else:
+                st.info("Necessites almenys 2 variables per crear relacions.")
 
 
 # =============================================================================
@@ -425,32 +544,30 @@ elif "🎛️" in seccio:
             with st.expander("📋 Descripció"):
                 st.write(esc['descripcio'])
 
-        # Debug: mostrar relacions guardades
+        # Relacions guardades
         conn_r = sqlite3.connect(DB_PATH)
         cur_r  = conn_r.cursor()
-        cur_r.execute("""
-            SELECT v1.nom, v2.nom, r.pes, r.descripcio
-            FROM relacions r
-            JOIN variables v1 ON r.variable_origen_id = v1.id
-            JOIN variables v2 ON r.variable_desti_id  = v2.id
-            WHERE r.escenari_id = ?
-        """, (eid,))
+        cur_r.execute("""SELECT v1.nom, v2.nom, r.pes FROM relacions r
+                         JOIN variables v1 ON r.variable_origen_id=v1.id
+                         JOIN variables v2 ON r.variable_desti_id=v2.id
+                         WHERE r.escenari_id=?""", (eid,))
         relacions_db = cur_r.fetchall()
         conn_r.close()
+
         if relacions_db:
-            with st.expander(f"⚡ Relacions guardades ({len(relacions_db)})"):
+            with st.expander(f"⚡ Relacions actives ({len(relacions_db)})"):
                 for r in relacions_db:
-                    pcls  = "rel-pes-pos" if r[2] > 0 else "rel-pes-neg"
-                    signe = "▲" if r[2] > 0 else "▼"
+                    pcls  = "rel-pes-pos" if r[2]>0 else "rel-pes-neg"
+                    signe = "▲" if r[2]>0 else "▼"
                     st.markdown(f'<div class="rel-row"><span class="rel-origen">{r[0]}</span><span style="color:#1e3050;">→</span><span class="rel-desti">{r[1]}</span><span class="{pcls}">{signe} {abs(r[2])}</span></div>', unsafe_allow_html=True)
         else:
-            st.warning("⚠️ Aquest escenari no té relacions guardades. Les variables no canviaran.")
+            st.warning("⚠️ No hi ha relacions. Ves a ✏️ Variables per afegir-ne.")
 
         fixes = [v for v in variables if v['tipus_var']=='fixa']
         if fixes:
             st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">📌 Variables fixes</div>', unsafe_allow_html=True)
-            cfs = st.columns(len(fixes))
-            for i,v in enumerate(fixes):
+            cfs = st.columns(min(len(fixes), 5))
+            for i,v in enumerate(fixes[:5]):
                 cfs[i].markdown(f'<div class="metric-box"><div class="metric-value">{v["valor_inicial"]}</div><div class="metric-unit">{v.get("unitat","")}</div><div class="metric-label">{v["nom"]}</div></div>', unsafe_allow_html=True)
 
         dinamiques = [v for v in variables if v['tipus_var']=='dinamica']
@@ -522,12 +639,10 @@ elif "📊" in seccio:
         eid  = st.session_state['escenari_actiu']
         conn = sqlite3.connect(DB_PATH)
         cur  = conn.cursor()
-        cur.execute("""
-            SELECT h.pas, v.nom, h.valor, v.unitat
-            FROM historial_valors h JOIN variables v ON h.variable_id=v.id
-            WHERE h.escenari_id=? AND v.tipus_var='dinamica'
-            ORDER BY h.pas ASC
-        """, (eid,))
+        cur.execute("""SELECT h.pas, v.nom, h.valor, v.unitat
+                       FROM historial_valors h JOIN variables v ON h.variable_id=v.id
+                       WHERE h.escenari_id=? AND v.tipus_var='dinamica'
+                       ORDER BY h.pas ASC""", (eid,))
         dades = cur.fetchall()
         cur.execute("SELECT nom, unitat_temps FROM escenaris WHERE id=?", (eid,))
         info  = cur.fetchone()
@@ -539,23 +654,17 @@ elif "📊" in seccio:
             df        = pd.DataFrame(dades, columns=['pas','variable','valor','unitat'])
             vars_disp = df['variable'].unique().tolist()
             cs, ci    = st.columns([3,1])
-            with cs:
-                sel = st.multiselect("Variables a mostrar", vars_disp, default=vars_disp[:4])
-            with ci:
-                st.markdown(f'<div class="metric-box" style="margin-top:8px;"><div class="metric-value">{df["pas"].max()}</div><div class="metric-unit">{info[1] if info else ""}s</div><div class="metric-label">{info[0] if info else ""}</div></div>', unsafe_allow_html=True)
+            with cs: sel = st.multiselect("Variables a mostrar", vars_disp, default=vars_disp[:4])
+            with ci: st.markdown(f'<div class="metric-box" style="margin-top:8px;"><div class="metric-value">{df["pas"].max()}</div><div class="metric-unit">{info[1] if info else ""}s</div><div class="metric-label">{info[0] if info else ""}</div></div>', unsafe_allow_html=True)
 
             if sel:
                 colors = ['#38bdf8','#34d399','#fbbf24','#f87171','#a78bfa','#fb923c','#22d3ee','#86efac']
                 fig    = go.Figure()
                 for i, var in enumerate(sel):
                     dv = df[df['variable']==var]
-                    fig.add_trace(go.Scatter(
-                        x=dv['pas'], y=dv['valor'], name=var,
-                        mode='lines+markers',
-                        line=dict(color=colors[i%len(colors)], width=2),
-                        marker=dict(size=5),
-                        hovertemplate=f"<b>{var}</b><br>Pas %{{x}}<br>%{{y:.2f}}<extra></extra>"
-                    ))
+                    fig.add_trace(go.Scatter(x=dv['pas'], y=dv['valor'], name=var, mode='lines+markers',
+                                             line=dict(color=colors[i%len(colors)], width=2), marker=dict(size=5),
+                                             hovertemplate=f"<b>{var}</b><br>Pas %{{x}}<br>%{{y:.2f}}<extra></extra>"))
                 fig.update_layout(
                     paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='#080d1a',
                     font=dict(color='#8fa3c4', family='DM Sans'),
