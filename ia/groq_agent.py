@@ -30,7 +30,12 @@ class AgentIA:
     """
 
     def __init__(self, api_key=None):
-        self.client = Groq(api_key=api_key or GROQ_API_KEY)
+        try:
+            import streamlit as st
+            clau = api_key or st.secrets.get("GROQ_API_KEY", "") or GROQ_API_KEY
+        except Exception:
+            clau = api_key or GROQ_API_KEY
+        self.client = Groq(api_key=clau)
 
     # -------------------------------------------------------------------------
     # GENERAR ESCENARI COMPLET
