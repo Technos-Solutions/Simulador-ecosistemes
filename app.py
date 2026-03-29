@@ -73,6 +73,17 @@ h3 { color:#94b8d8 !important; font-weight:500 !important; }
 .stTextInput input, .stTextArea textarea, .stNumberInput input {
     background:#0d1829 !important; border:1px solid #1e3050 !important; color:#c9d4e8 !important; border-radius:8px !important;
 }
+.stTextInput label, .stTextArea label, .stNumberInput label,
+.stSelectbox label, .stSlider label, .stRadio label,
+.stMultiSelect label {
+    color:#a8c0d8 !important; font-size:0.9rem !important; font-weight:500 !important;
+}
+[data-testid="stMarkdownContainer"] p {
+    color:#a8c0d8 !important;
+}
+.stSlider [data-testid="stMarkdownContainer"] {
+    color:#c9d4e8 !important;
+}
 .stSelectbox > div > div { background:#0d1829 !important; border:1px solid #1e3050 !important; color:#c9d4e8 !important; }
 
 .stButton > button {
