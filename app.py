@@ -170,9 +170,6 @@ with st.sidebar:
 # =============================================================================
 
 if "🆕" in seccio:
-    for k in ['escenari_ia', 'tema_ia', 'proposta_manual', 'config_manual']:
-        if k in st.session_state:
-            del st.session_state[k]
     st.markdown("# 🆕 Nou escenari")
     st.markdown("Crea una nova simulació en mode automàtic o assistit.")
     st.markdown("---")
@@ -378,13 +375,25 @@ elif "📂" in seccio:
             eid, nom, tema, estat, unitat, passos, creat = esc
             ecls     = {"actiu":"tag-green","pausat":"tag-amber","finalitzat":"tag-red"}.get(estat,"tag-blue")
             es_actiu = "✦ ACTIU" if st.session_state.get('escenari_actiu')==eid else ""
-            ci, cb   = st.columns([5,1])
+            ci, cb, cd = st.columns([5,1,1])
             with ci:
                 st.markdown(f'<div class="esc-card"><div style="display:flex;align-items:center;gap:10px;"><div class="esc-nom">{nom}</div><span class="tag {ecls}">{estat}</span><span style="font-size:0.7rem;color:#38bdf8;">{es_actiu}</span></div><div class="esc-tema">{tema}</div><div class="esc-meta">{passos} {unitat}s &nbsp;·&nbsp; {creat[:10]}</div></div>', unsafe_allow_html=True)
             with cb:
                 st.markdown("<div style='margin-top:14px;'>", unsafe_allow_html=True)
                 if st.button("▶ Carregar", key=f"load_{eid}"):
                     st.session_state['escenari_actiu'] = eid
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+            with cd:
+                st.markdown("<div style='margin-top:14px;'>", unsafe_allow_html=True)
+                if st.button("🗑 Esborrar", key=f"del_{eid}"):
+                    conn_d = sqlite3.connect(DB_PATH)
+                    conn_d.execute("PRAGMA foreign_keys=ON;")
+                    conn_d.execute("DELETE FROM escenaris WHERE id=?", (eid,))
+                    conn_d.commit()
+                    conn_d.close()
+                    if st.session_state.get('escenari_actiu') == eid:
+                        del st.session_state['escenari_actiu']
                     st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -415,6 +424,27 @@ elif "🎛️" in seccio:
         if esc.get('descripcio'):
             with st.expander("📋 Descripció"):
                 st.write(esc['descripcio'])
+
+        # Debug: mostrar relacions guardades
+        conn_r = sqlite3.connect(DB_PATH)
+        cur_r  = conn_r.cursor()
+        cur_r.execute("""
+            SELECT v1.nom, v2.nom, r.pes, r.descripcio
+            FROM relacions r
+            JOIN variables v1 ON r.variable_origen_id = v1.id
+            JOIN variables v2 ON r.variable_desti_id  = v2.id
+            WHERE r.escenari_id = ?
+        """, (eid,))
+        relacions_db = cur_r.fetchall()
+        conn_r.close()
+        if relacions_db:
+            with st.expander(f"⚡ Relacions guardades ({len(relacions_db)})"):
+                for r in relacions_db:
+                    pcls  = "rel-pes-pos" if r[2] > 0 else "rel-pes-neg"
+                    signe = "▲" if r[2] > 0 else "▼"
+                    st.markdown(f'<div class="rel-row"><span class="rel-origen">{r[0]}</span><span style="color:#1e3050;">→</span><span class="rel-desti">{r[1]}</span><span class="{pcls}">{signe} {abs(r[2])}</span></div>', unsafe_allow_html=True)
+        else:
+            st.warning("⚠️ Aquest escenari no té relacions guardades. Les variables no canviaran.")
 
         fixes = [v for v in variables if v['tipus_var']=='fixa']
         if fixes:
