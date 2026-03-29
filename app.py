@@ -88,9 +88,11 @@ def _guardar_escenari_ia(nom, descripcio, unitat, num_passos, ei):
         cur.execute("INSERT INTO variables (escenari_id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max,notes) VALUES (?,?,'dinamica',?,?,?,?,?)",
                     (eid,v['nom'],v.get('unitat',''),v['valor_inicial'],v.get('valor_min',0),v.get('valor_max',100),v.get('notes','')))
         vids[v['nom']] = cur.lastrowid
+    # Cerca flexible: ignora majúscules i espais
+    vids_norm = {k.lower().strip(): v for k, v in vids.items()}
     for r in ei.get('relacions', []):
-        orig = vids.get(r['origen'])
-        dest = vids.get(r['desti'])
+        orig = vids_norm.get(r['origen'].lower().strip())
+        dest = vids_norm.get(r['desti'].lower().strip())
         if orig and dest:
             cur.execute("INSERT INTO relacions (escenari_id,variable_origen_id,variable_desti_id,pes,descripcio,generada_per_ia) VALUES (?,?,?,?,?,1)",
                         (eid,orig,dest,r['pes'],r.get('descripcio','')))
@@ -119,9 +121,11 @@ def _guardar_escenari_assistit(cfg, pm):
         cur.execute("INSERT INTO variables (escenari_id,nom,tipus_var,unitat,valor_inicial,valor_min,valor_max,notes) VALUES (?,?,'dinamica',?,?,?,?,?)",
                     (eid,v['nom'],v.get('unitat',''),v['valor_inicial'],v.get('valor_min',0),v.get('valor_max',100),v.get('notes','')))
         vids[v['nom']] = cur.lastrowid
+    # Cerca flexible: ignora majúscules i espais
+    vids_norm = {k.lower().strip(): v for k, v in vids.items()}
     for r in pm.get('relacions', []):
-        orig = vids.get(r['origen'])
-        dest = vids.get(r['desti'])
+        orig = vids_norm.get(r['origen'].lower().strip())
+        dest = vids_norm.get(r['desti'].lower().strip())
         if orig and dest:
             cur.execute("INSERT INTO relacions (escenari_id,variable_origen_id,variable_desti_id,pes,descripcio,generada_per_ia) VALUES (?,?,?,?,?,1)",
                         (eid,orig,dest,r['pes'],r.get('descripcio','')))
@@ -166,12 +170,15 @@ with st.sidebar:
 # =============================================================================
 
 if "🆕" in seccio:
+    for k in ['escenari_ia', 'tema_ia', 'proposta_manual', 'config_manual']:
+        if k in st.session_state:
+            del st.session_state[k]
     st.markdown("# 🆕 Nou escenari")
     st.markdown("Crea una nova simulació en mode automàtic o assistit.")
     st.markdown("---")
 
-    mode = st.radio("", ["🤖  Automàtic (IA genera tot)","🔬  Assistit (tu controles, IA ajuda)"],
-                    horizontal=True, label_visibility="collapsed")
+    mode = st.radio("Selecciona el mode de creació", ["🤖  Automàtic (IA genera tot)","🔬  Assistit (tu controles, IA ajuda)"],
+                    horizontal=True)
 
     # --- MODE AUTOMÀTIC ---
     if "🤖" in mode:
