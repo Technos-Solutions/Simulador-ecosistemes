@@ -350,19 +350,36 @@ if "🆕" in seccio:
                     st.session_state['proposta_manual'][key].append(nv)
                     st.rerun()
 
-            rels_del = []
+            # Filtrar relacions: eliminar les que fan referència a variables esborrades
+            noms_vars_actuals = set(
+                [v['nom'] for v in pm.get('variables_fixes',[])] +
+                [v['nom'] for v in pm.get('variables_dinamiques',[])]
+            )
+            relacions_valides = [r for r in pm.get('relacions',[])
+                                 if r['origen'] in noms_vars_actuals and r['desti'] in noms_vars_actuals]
+            st.session_state['proposta_manual']['relacions'] = relacions_valides
+
             st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">⚡ Relacions proposades</div>', unsafe_allow_html=True)
-            for i, r in enumerate(pm.get('relacions',[])):
-                cr1, cr2 = st.columns([5,0.4])
+
+            # Capçaleres relacions
+            rh1, rh2, rh3 = st.columns([4, 1, 3])
+            with rh1: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Origen → Destí</div>', unsafe_allow_html=True)
+            with rh2: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Pes</div>', unsafe_allow_html=True)
+            with rh3: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Descripció</div>', unsafe_allow_html=True)
+
+            for i, r in enumerate(relacions_valides):
+                pcls  = "rel-pes-pos" if r['pes']>0 else "rel-pes-neg"
+                signe = "▲" if r['pes']>0 else "▼"
+                cr1, cr2, cr3 = st.columns([4, 1, 3])
                 with cr1:
-                    pcls  = "rel-pes-pos" if r['pes']>0 else "rel-pes-neg"
-                    signe = "▲" if r['pes']>0 else "▼"
-                    st.markdown(f'<div class="rel-row"><span class="rel-origen">{r["origen"]}</span><span style="color:#1e3050;">→</span><span class="rel-desti">{r["desti"]}</span><span class="{pcls}">{signe} {abs(r["pes"])}</span><span class="rel-desc">{r.get("descripcio","")}</span></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div style="padding:8px 0;"><span class="rel-origen">{r["origen"]}</span> <span style="color:#1e3050;">→</span> <span class="rel-desti">{r["desti"]}</span></div>', unsafe_allow_html=True)
                 with cr2:
-                    if st.button("🗑", key=f"dr_{i}"): rels_del.append(i)
-            if rels_del:
-                for i in sorted(rels_del, reverse=True): st.session_state['proposta_manual']['relacions'].pop(i)
-                st.rerun()
+                    nou_pes = st.number_input("", min_value=-1.0, max_value=1.0,
+                                              value=float(r['pes']), step=0.1,
+                                              key=f"rpes_{i}", label_visibility="collapsed")
+                    st.session_state['proposta_manual']['relacions'][i]['pes'] = nou_pes
+                with cr3:
+                    st.markdown(f'<div style="padding:8px 0;color:#4a6a8a;font-size:0.8rem;">{r.get("descripcio","")}</div>', unsafe_allow_html=True)
 
             st.markdown("---")
             if st.button("💾  Guardar i activar escenari", type="primary"):
