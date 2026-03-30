@@ -175,8 +175,11 @@ with st.sidebar:
 # =============================================================================
 
 if "🆕" in seccio:
-    for k in ['escenari_ia','tema_ia','proposta_manual','config_manual']:
-        if k in st.session_state: del st.session_state[k]
+    # Netejar NOMÉS quan venim d'una altra secció
+    if st.session_state.get('seccio_anterior','') != '🆕':
+        for k in ['escenari_ia','tema_ia','proposta_manual','config_manual']:
+            if k in st.session_state: del st.session_state[k]
+    st.session_state['seccio_anterior'] = '🆕'
 
     st.markdown("# 🆕 Nou escenari")
     st.markdown("Crea una nova simulació en mode automàtic o assistit.")
@@ -282,14 +285,28 @@ if "🆕" in seccio:
             st.markdown("## ✏️ Revisa i modifica")
             st.markdown('<div class="sim-card-amber"><div style="font-size:0.8rem;color:#a07830;line-height:1.6;">🔬 Esborra el que no necessites i afegeix les teves pròpies variables abans de guardar.</div></div>', unsafe_allow_html=True)
 
+            # Capçaleres
+            hc1, hc2, hc3, hc4, hc5 = st.columns([3,1,1,1,0.4])
+            with hc1: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Nom</div>', unsafe_allow_html=True)
+            with hc2: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Valor</div>', unsafe_allow_html=True)
+            with hc3: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Mínim</div>', unsafe_allow_html=True)
+            with hc4: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Màxim</div>', unsafe_allow_html=True)
+
             fixes_del = []
             st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📌 Variables fixes</div>', unsafe_allow_html=True)
             for i, v in enumerate(pm.get('variables_fixes',[])):
-                cf1, cf2, cf3, cf4 = st.columns([3,1,1,0.4])
+                cf1, cf2, cf3, cf4, cf5 = st.columns([3,1,1,1,0.4])
                 with cf1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">📌 {v["nom"]} <span style="color:#2d5a8a;font-size:0.75rem;">({v.get("unitat","")})</span></div>', unsafe_allow_html=True)
-                with cf2: st.markdown(f'<div style="padding:8px 0;color:#38bdf8;font-family:monospace;font-size:0.8rem;">{v["valor_inicial"]}</div>', unsafe_allow_html=True)
-                with cf3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">[{v.get("valor_min",0)}-{v.get("valor_max",100)}]</div>', unsafe_allow_html=True)
+                with cf2:
+                    nou_val = st.number_input("", value=float(v["valor_inicial"]), key=f"fval_{i}", label_visibility="collapsed")
+                    pm['variables_fixes'][i]['valor_inicial'] = nou_val
+                with cf3:
+                    nou_min = st.number_input("", value=float(v.get("valor_min",0)), key=f"fmin_{i}", label_visibility="collapsed")
+                    pm['variables_fixes'][i]['valor_min'] = nou_min
                 with cf4:
+                    nou_max = st.number_input("", value=float(v.get("valor_max",100)), key=f"fmax_{i}", label_visibility="collapsed")
+                    pm['variables_fixes'][i]['valor_max'] = nou_max
+                with cf5:
                     if st.button("🗑", key=f"df_{i}"): fixes_del.append(i)
             if fixes_del:
                 for i in sorted(fixes_del, reverse=True): st.session_state['proposta_manual']['variables_fixes'].pop(i)
@@ -298,11 +315,18 @@ if "🆕" in seccio:
             dins_del = []
             st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:12px 0 8px;">🔄 Variables dinàmiques</div>', unsafe_allow_html=True)
             for i, v in enumerate(pm.get('variables_dinamiques',[])):
-                cd1, cd2, cd3, cd4 = st.columns([3,1,1,0.4])
+                cd1, cd2, cd3, cd4, cd5 = st.columns([3,1,1,1,0.4])
                 with cd1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">🔄 {v["nom"]} <span style="color:#2d5a8a;font-size:0.75rem;">({v.get("unitat","")})</span></div>', unsafe_allow_html=True)
-                with cd2: st.markdown(f'<div style="padding:8px 0;color:#38bdf8;font-family:monospace;font-size:0.8rem;">{v["valor_inicial"]}</div>', unsafe_allow_html=True)
-                with cd3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">[{v.get("valor_min",0)}-{v.get("valor_max",100)}]</div>', unsafe_allow_html=True)
+                with cd2:
+                    nou_val = st.number_input("", value=float(v["valor_inicial"]), key=f"dval_{i}", label_visibility="collapsed")
+                    pm['variables_dinamiques'][i]['valor_inicial'] = nou_val
+                with cd3:
+                    nou_min = st.number_input("", value=float(v.get("valor_min",0)), key=f"dmin_{i}", label_visibility="collapsed")
+                    pm['variables_dinamiques'][i]['valor_min'] = nou_min
                 with cd4:
+                    nou_max = st.number_input("", value=float(v.get("valor_max",100)), key=f"dmax_{i}", label_visibility="collapsed")
+                    pm['variables_dinamiques'][i]['valor_max'] = nou_max
+                with cd5:
                     if st.button("🗑", key=f"dd_{i}"): dins_del.append(i)
             if dins_del:
                 for i in sorted(dins_del, reverse=True): st.session_state['proposta_manual']['variables_dinamiques'].pop(i)
