@@ -205,6 +205,41 @@ def lang_ia():
 # PANTALLA DE BENVINGUDA / SELECTOR D'IDIOMA
 # =============================================================================
 
+if 'splash_vist' not in st.session_state:
+    st.markdown("""
+    <style>
+    .stApp { background: #080d1a !important; }
+    </style>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                min-height:80vh;text-align:center;font-family:'DM Sans',sans-serif;">
+        <div style="font-size:72px;margin-bottom:16px;">🌍</div>
+        <div style="font-family:'Space Mono',monospace;font-size:2.8rem;color:#e8f4fd;
+                    font-weight:700;letter-spacing:-1px;margin-bottom:8px;">EcoSim</div>
+        <div style="font-size:0.75rem;color:#2d5a8a;letter-spacing:0.18em;
+                    text-transform:uppercase;margin-bottom:72px;">Scientific Ecosystem Simulator</div>
+        <div style="width:180px;height:2px;background:#1e3050;border-radius:1px;overflow:hidden;margin-bottom:16px;">
+            <div id="splash-bar" style="height:100%;background:#38bdf8;border-radius:1px;
+                                        width:0%;transition:width 0.05s linear;"></div>
+        </div>
+        <div style="font-size:0.7rem;color:#2d5a8a;letter-spacing:0.08em;">Carregant...</div>
+    </div>
+    <script>
+    var pct = 0;
+    var iv = setInterval(function() {
+        pct += 1;
+        var bar = document.getElementById('splash-bar');
+        if (bar) bar.style.width = pct + '%';
+        if (pct >= 100) clearInterval(iv);
+    }, 40);
+    </script>
+    """, unsafe_allow_html=True)
+
+    import time
+    time.sleep(4)
+    st.session_state['splash_vist'] = True
+    st.session_state['idioma'] = 'ca'
+    st.rerun()
+
 if 'idioma' not in st.session_state:
     st.session_state['idioma'] = 'ca'
 
