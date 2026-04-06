@@ -889,6 +889,16 @@ elif "🎛️" in seccio:
                     st.slider(f"{v['nom']} ({v.get('unitat','')})", min_value=vmin, max_value=vmax,
                               value=float(v['valor_inicial']), key=f"sl_{v['id']}")
 
+        # Mostrar resums de passos anteriors
+        if 'resums_passos' in st.session_state and st.session_state['resums_passos']:
+            st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px;">🤖 Anàlisi IA per pas</div>', unsafe_allow_html=True)
+            for r in reversed(st.session_state['resums_passos'][-5:]):
+                st.markdown(f"""
+                <div style="background:#0d1829;border-left:3px solid #34d399;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:6px;">
+                    <div style="font-size:0.7rem;color:#1a6040;text-transform:uppercase;margin-bottom:4px;">🤖 Pas {r['pas']}</div>
+                    <div style="font-size:0.85rem;color:#5a9a78;line-height:1.6;">{r['text']}</div>
+                </div>""", unsafe_allow_html=True)
+
         st.markdown("---")
         ba, bb, bc = st.columns(3)
         with ba:
@@ -938,17 +948,20 @@ elif "🎛️" in seccio:
                         with st.spinner("La IA analitza el pas..."):
                             resum_pas = _generar_resum_pas(esc['nom'], motor.pas_actual, ", ".join(canvis), lang_ia())
                         if resum_pas:
-                            st.markdown(f"""
-                            <div style="background:#0d1829;border-left:3px solid #34d399;border-radius:0 8px 8px 0;padding:12px 16px;margin:8px 0;">
-                                <div style="font-size:0.7rem;color:#1a6040;text-transform:uppercase;margin-bottom:4px;">🤖 Pas {motor.pas_actual}</div>
-                                <div style="font-size:0.85rem;color:#5a9a78;line-height:1.6;">{resum_pas}</div>
-                            </div>""", unsafe_allow_html=True)
+                            if 'resums_passos' not in st.session_state:
+                                st.session_state['resums_passos'] = []
+                            st.session_state['resums_passos'].append({
+                                'pas': motor.pas_actual,
+                                'text': resum_pas
+                            })
                     st.rerun()
                 else:
                     st.info("Simulació finalitzada.")
         with bc:
             if st.button("↺  Reiniciar"):
                 if 'motor_pas' in st.session_state: del st.session_state['motor_pas']
+                if 'resums_passos' in st.session_state: del st.session_state['resums_passos']
+                if f'informe_{eid}' in st.session_state: del st.session_state[f'informe_{eid}']
                 conn2 = sqlite3.connect(DB_PATH)
                 conn2.execute("DELETE FROM historial_valors WHERE escenari_id=?", (eid,))
                 conn2.commit(); conn2.close()
