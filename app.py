@@ -248,6 +248,28 @@ if not os.path.exists(DB_PATH):
 
 
 # =============================================================================
+# UNITATS ESTÀNDARD
+# =============================================================================
+
+UNITATS_ESTANDARD = [
+    "--- Longitud ---", "m", "km", "cm", "mm",
+    "--- Temperatura ---", "°C", "°F", "K",
+    "--- Massa ---", "kg", "g", "t", "Mt", "Gt",
+    "--- Volum ---", "m³", "km³", "l", "ml",
+    "--- Temps ---", "s", "min", "h", "dia", "mes", "any",
+    "--- Percentatge ---", "%",
+    "--- Concentració ---", "ppm", "ppb", "mg/l",
+    "--- Velocitat ---", "m/s", "km/h", "km/any",
+    "--- Energia ---", "J", "kJ", "MJ", "kWh",
+    "--- Pressió ---", "Pa", "hPa", "atm", "bar",
+    "--- Superfície ---", "m²", "km²", "ha",
+    "--- Densitat ---", "kg/m³", "ind/km²", "arbres/ha",
+    "--- Economia ---", "€", "$", "M€", "M$",
+    "--- Personalitzada ---", "sense unitat", "altra..."
+]
+
+
+# =============================================================================
 # FUNCIONS AUXILIARS
 # =============================================================================
 
@@ -724,7 +746,17 @@ elif "✏️" in seccio:
                 icona = '📌' if v['tipus_var']=='fixa' else '🔄'
                 cv1, cv2, cv3, cv4, cv5, cv6, cv7 = st.columns([2,1,1,1,1,1,0.5])
                 with cv1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">{icona} {v["nom"]}</div>', unsafe_allow_html=True)
-                with cv2: nou_unit = st.text_input('', value=v.get('unitat',''), key=f'eunit_{v["id"]}', label_visibility='collapsed')
+                with cv2:
+                    unitat_actual = v.get('unitat','')
+                    opts = UNITATS_ESTANDARD + ([unitat_actual] if unitat_actual and unitat_actual not in UNITATS_ESTANDARD else [])
+                    idx = opts.index(unitat_actual) if unitat_actual in opts else 0
+                    nou_unit_sel = st.selectbox('', opts, index=idx, key=f'eunit_{v["id"]}', label_visibility='collapsed')
+                    if nou_unit_sel == 'altra...':
+                        nou_unit = st.text_input('Escriu la unitat', key=f'eunit_custom_{v["id"]}')
+                    elif nou_unit_sel.startswith('---'):
+                        nou_unit = unitat_actual
+                    else:
+                        nou_unit = nou_unit_sel
                 with cv3: nou_val  = st.number_input('', value=float(v['valor_inicial']), key=f'eval_{v["id"]}', label_visibility='collapsed')
                 with cv4: nou_min  = st.number_input('', value=float(v['valor_min'] or 0), key=f'emin_{v["id"]}', label_visibility='collapsed')
                 with cv5: nou_max  = st.number_input('', value=float(v['valor_max'] or 100), key=f'emax_{v["id"]}', label_visibility='collapsed')
@@ -881,13 +913,30 @@ elif "🎛️" in seccio:
         dinamiques = [v for v in variables if v['tipus_var']=='dinamica']
         if dinamiques:
             st.markdown('<div style="font-size:0.75rem;color:#2d5a8a;text-transform:uppercase;letter-spacing:0.08em;margin:20px 0 10px;">🎛️ Variables dinàmiques</div>', unsafe_allow_html=True)
+            conn_sim = sqlite3.connect(DB_PATH)
+            cur_sim  = conn_sim.cursor()
+            cur_sim.execute('SELECT variable_id, valor FROM historial_valors WHERE escenari_id=? AND pas=(SELECT MAX(pas) FROM historial_valors WHERE escenari_id=?)', (eid, eid))
+            valors_actuals = {row[0]: row[1] for row in cur_sim.fetchall()}
+            conn_sim.close()
             cds = st.columns(2)
             for i,v in enumerate(dinamiques):
                 with cds[i%2]:
-                    vmin = float(v['valor_min']) if v['valor_min'] is not None else 0.0
-                    vmax = float(v['valor_max']) if v['valor_max'] is not None else 100.0
-                    st.slider(f"{v['nom']} ({v.get('unitat','')})", min_value=vmin, max_value=vmax,
-                              value=float(v['valor_inicial']), key=f"sl_{v['id']}")
+                    vmin_raw = v['valor_min']
+                    vmax_raw = v['valor_max']
+                    val_actual = valors_actuals.get(v['id'], float(v['valor_inicial']))
+                    # Si min i max son ambdos 0 o None = sense limits, mostrar com metrica
+                    sense_limits = (not vmin_raw and not vmax_raw) or (vmin_raw == vmax_raw)
+                    if sense_limits:
+                        st.metric(label=f"{v['nom']} ({v.get('unitat','')})", value=f"{val_actual:.2f}")
+                    else:
+                        vmin = float(vmin_raw) if vmin_raw is not None else 0.0
+                        vmax = float(vmax_raw) if vmax_raw is not None else 100.0
+                        if vmin >= vmax: vmax = vmin + 1.0
+                        val_slider = max(vmin, min(vmax, val_actual))
+                        st.slider(f"{v['nom']} ({v.get('unitat','')})",
+                                  min_value=vmin, max_value=vmax,
+                                  value=val_slider, key=f"sl_{v['id']}")
+
 
         # Mostrar resums de passos anteriors
         if 'resums_passos' in st.session_state and st.session_state['resums_passos']:
