@@ -214,14 +214,29 @@ if 'idioma' not in st.session_state:
     </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
+    # Selector d'idioma petit a dalt a la dreta
+    col_esp, col_lang = st.columns([5, 1])
+    with col_lang:
         idioma_sel = st.selectbox(
-            "🌍 Selecciona l'idioma / Selecciona el idioma / Select language",
+            "",
             options=["ca", "es", "en"],
-            format_func=lambda x: {"ca": "🇪🇸 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x]
+            format_func=lambda x: {"ca": "🏴󠁥󠁳󠁣󠁴󠁿 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x],
+            label_visibility="collapsed",
+            key="idioma_benvinguda"
         )
-        if st.button("▶  Continuar / Continue", type="primary", use_container_width=True):
+
+    # Contingut central
+    st.markdown("""
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;text-align:center;">
+        <div style="font-family:'Space Mono',monospace;font-size:4rem;margin-bottom:8px;">🌍</div>
+        <div style="font-family:'Space Mono',monospace;font-size:2.5rem;color:#e8f4fd;font-weight:700;margin-bottom:12px;">EcoSim</div>
+        <div style="font-size:1rem;color:#4a6a8a;margin-bottom:48px;">Scientific Ecosystem Simulator</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1,1,1])
+    with col2:
+        if st.button("▶  Continuar", type="primary", use_container_width=True):
             st.session_state['idioma'] = idioma_sel
             st.rerun()
     st.stop()
@@ -375,7 +390,7 @@ with st.sidebar:
         t('idioma_label'),
         options=["ca", "es", "en"],
         index=["ca","es","en"].index(idioma_actual),
-        format_func=lambda x: {"ca": "🇪🇸 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x],
+        format_func=lambda x: {"ca": "🏴󠁥󠁳󠁣󠁴󠁿 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x],
         key="selector_idioma"
     )
     if nou_idioma != idioma_actual:
