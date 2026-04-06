@@ -206,40 +206,7 @@ def lang_ia():
 # =============================================================================
 
 if 'idioma' not in st.session_state:
-    st.markdown("""
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;">
-        <div style="font-family:'Space Mono',monospace;font-size:3rem;margin-bottom:8px;">🌍</div>
-        <div style="font-family:'Space Mono',monospace;font-size:2rem;color:#e8f4fd;font-weight:700;margin-bottom:8px;">EcoSim</div>
-        <div style="font-size:0.9rem;color:#4a6a8a;margin-bottom:40px;">Scientific Ecosystem Simulator</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Selector d'idioma petit a dalt a la dreta
-    col_esp, col_lang = st.columns([5, 1])
-    with col_lang:
-        idioma_sel = st.selectbox(
-            "",
-            options=["ca", "es", "en"],
-            format_func=lambda x: {"ca": "🏴󠁥󠁳󠁣󠁴󠁿 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x],
-            label_visibility="collapsed",
-            key="idioma_benvinguda"
-        )
-
-    # Contingut central
-    st.markdown("""
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;text-align:center;">
-        <div style="font-family:'Space Mono',monospace;font-size:4rem;margin-bottom:8px;">🌍</div>
-        <div style="font-family:'Space Mono',monospace;font-size:2.5rem;color:#e8f4fd;font-weight:700;margin-bottom:12px;">EcoSim</div>
-        <div style="font-size:1rem;color:#4a6a8a;margin-bottom:48px;">Scientific Ecosystem Simulator</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1,1,1])
-    with col2:
-        if st.button("▶  Continuar", type="primary", use_container_width=True):
-            st.session_state['idioma'] = idioma_sel
-            st.rerun()
-    st.stop()
+    st.session_state['idioma'] = 'ca'
 
 if not os.path.exists(DB_PATH):
     crear_base_dades(DB_PATH)
@@ -384,19 +351,6 @@ with st.sidebar:
         "📊  Gràfiques"
     ], label_visibility="collapsed")
 
-    # Selector d'idioma al sidebar
-    idioma_actual = st.session_state.get('idioma', 'ca')
-    nou_idioma = st.selectbox(
-        t('idioma_label'),
-        options=["ca", "es", "en"],
-        index=["ca","es","en"].index(idioma_actual),
-        format_func=lambda x: {"ca": "🏴󠁥󠁳󠁣󠁴󠁿 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x],
-        key="selector_idioma"
-    )
-    if nou_idioma != idioma_actual:
-        st.session_state['idioma'] = nou_idioma
-        st.rerun()
-
     if 'escenari_actiu' in st.session_state:
         st.markdown("---")
         conn = sqlite3.connect(DB_PATH)
@@ -424,8 +378,24 @@ if "🆕" in seccio:
             if k in st.session_state: del st.session_state[k]
     st.session_state['seccio_anterior'] = '🆕'
 
-    st.markdown("# 🆕 Nou escenari")
-    st.markdown("Crea una nova simulació en mode automàtic o assistit.")
+    # Capçalera amb selector d'idioma discret
+    col_tit, col_lang = st.columns([5, 1])
+    with col_tit:
+        st.markdown("# 🆕 Nou escenari")
+        st.markdown("Crea una nova simulació en mode automàtic o assistit.")
+    with col_lang:
+        st.markdown("<div style='margin-top:18px;'>", unsafe_allow_html=True)
+        nou_idioma = st.selectbox("",
+            options=["ca", "es", "en"],
+            index=["ca","es","en"].index(st.session_state.get('idioma','ca')),
+            format_func=lambda x: {"ca":"Català","es":"Español","en":"English"}[x],
+            label_visibility="collapsed",
+            key="sel_idioma_top"
+        )
+        if nou_idioma != st.session_state.get('idioma','ca'):
+            st.session_state['idioma'] = nou_idioma
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
     mode = st.radio("Selecciona el mode de creació", ["🤖  Automàtic (IA genera tot)","🔬  Assistit (tu controles, IA ajuda)"], horizontal=True)
 
