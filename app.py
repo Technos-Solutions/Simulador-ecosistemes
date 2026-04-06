@@ -65,6 +65,167 @@ hr { border-color:#1e2d4a !important; margin:20px 0 !important; }
 """
 st.markdown(CSS, unsafe_allow_html=True)
 
+
+# =============================================================================
+# SISTEMA D'IDIOMES
+# =============================================================================
+
+TEXTOS = {
+    "ca": {
+        "titol": "Simulador d'Ecosistemes",
+        "nou_escenari": "🆕  Nou escenari",
+        "escenaris": "📂  Escenaris",
+        "variables": "✏️  Variables",
+        "simulacio": "🎛️  Simulació",
+        "grafiques": "📊  Gràfiques",
+        "escenari_actiu": "Escenari actiu",
+        "selecciona_idioma": "Selecciona l'idioma",
+        "benvinguda": "Benvingut a EcoSim",
+        "benvinguda_desc": "Plataforma de simulació científica d'ecosistemes i escenaris.",
+        "continuar": "Continuar",
+        "mode_automatic": "🤖  Automàtic (IA genera tot)",
+        "mode_assistit": "🔬  Assistit (tu controles, IA ajuda)",
+        "generar_ia": "🤖  Generar amb IA",
+        "proposar_ia": "🔬  Proposar variables i relacions amb IA",
+        "guardar": "💾  Guardar i activar escenari",
+        "simular_tot": "▶️  Simular tot",
+        "avancar_pas": "⏭️  Avançar un pas",
+        "reiniciar": "↺  Reiniciar",
+        "grafiques_titol": "# 📊 Evolució de la simulació",
+        "variables_titol": "# ✏️ Variables i relacions",
+        "simulacio_titol": "# 🎛️ Panell de simulació",
+        "idioma_label": "🌍 Idioma",
+        "resum_ia": "🤖 Anàlisi de la IA",
+        "resum_complet": "📋 Informe final de la IA",
+        "notes": "📝 Notes de sessió",
+        "guardar_nota": "💾  Guardar nota",
+        "notes_anteriors": "📖 Notes anteriors",
+        "pas_label": "Pas",
+        "valors_finals": "Valors finals",
+        "variables_mostrar": "Variables a mostrar",
+        "afegir_variable": "➕  Afegir variable",
+        "afegir_relacio": "➕  Afegir relació",
+        "nom": "Nom", "unitat": "Unitat", "valor": "Valor",
+        "minim": "Mínim", "maxim": "Màxim", "tipus": "Tipus",
+        "origen_desti": "Origen → Destí", "pes": "Pes", "descripcio": "Descripció",
+        "lang_prompt": "En quin idioma vols la IA?"
+    },
+    "es": {
+        "titol": "Simulador de Ecosistemas",
+        "nou_escenari": "🆕  Nuevo escenario",
+        "escenaris": "📂  Escenarios",
+        "variables": "✏️  Variables",
+        "simulacio": "🎛️  Simulación",
+        "grafiques": "📊  Gráficas",
+        "escenari_actiu": "Escenario activo",
+        "selecciona_idioma": "Selecciona el idioma",
+        "benvinguda": "Bienvenido a EcoSim",
+        "benvinguda_desc": "Plataforma de simulación científica de ecosistemas y escenarios.",
+        "continuar": "Continuar",
+        "mode_automatic": "🤖  Automático (IA genera todo)",
+        "mode_assistit": "🔬  Asistido (tú controlas, IA ayuda)",
+        "generar_ia": "🤖  Generar con IA",
+        "proposar_ia": "🔬  Proponer variables y relaciones con IA",
+        "guardar": "💾  Guardar y activar escenario",
+        "simular_tot": "▶️  Simular todo",
+        "avancar_pas": "⏭️  Avanzar un paso",
+        "reiniciar": "↺  Reiniciar",
+        "grafiques_titol": "# 📊 Evolución de la simulación",
+        "variables_titol": "# ✏️ Variables y relaciones",
+        "simulacio_titol": "# 🎛️ Panel de simulación",
+        "idioma_label": "🌍 Idioma",
+        "resum_ia": "🤖 Análisis de la IA",
+        "resum_complet": "📋 Informe final de la IA",
+        "notes": "📝 Notas de sesión",
+        "guardar_nota": "💾  Guardar nota",
+        "notes_anteriors": "📖 Notas anteriores",
+        "pas_label": "Paso",
+        "valors_finals": "Valores finales",
+        "variables_mostrar": "Variables a mostrar",
+        "afegir_variable": "➕  Añadir variable",
+        "afegir_relacio": "➕  Añadir relación",
+        "nom": "Nombre", "unitat": "Unidad", "valor": "Valor",
+        "minim": "Mínimo", "maxim": "Máximo", "tipus": "Tipo",
+        "origen_desti": "Origen → Destino", "pes": "Peso", "descripcio": "Descripción",
+        "lang_prompt": "¿En qué idioma quieres la IA?"
+    },
+    "en": {
+        "titol": "Ecosystem Simulator",
+        "nou_escenari": "🆕  New scenario",
+        "escenaris": "📂  Scenarios",
+        "variables": "✏️  Variables",
+        "simulacio": "🎛️  Simulation",
+        "grafiques": "📊  Charts",
+        "escenari_actiu": "Active scenario",
+        "selecciona_idioma": "Select language",
+        "benvinguda": "Welcome to EcoSim",
+        "benvinguda_desc": "Scientific simulation platform for ecosystems and scenarios.",
+        "continuar": "Continue",
+        "mode_automatic": "🤖  Automatic (AI generates everything)",
+        "mode_assistit": "🔬  Assisted (you control, AI helps)",
+        "generar_ia": "🤖  Generate with AI",
+        "proposar_ia": "🔬  Propose variables and relations with AI",
+        "guardar": "💾  Save and activate scenario",
+        "simular_tot": "▶️  Simulate all",
+        "avancar_pas": "⏭️  Advance one step",
+        "reiniciar": "↺  Reset",
+        "grafiques_titol": "# 📊 Simulation evolution",
+        "variables_titol": "# ✏️ Variables and relations",
+        "simulacio_titol": "# 🎛️ Simulation panel",
+        "idioma_label": "🌍 Language",
+        "resum_ia": "🤖 AI Analysis",
+        "resum_complet": "📋 AI Final Report",
+        "notes": "📝 Session notes",
+        "guardar_nota": "💾  Save note",
+        "notes_anteriors": "📖 Previous notes",
+        "pas_label": "Step",
+        "valors_finals": "Final values",
+        "variables_mostrar": "Variables to show",
+        "afegir_variable": "➕  Add variable",
+        "afegir_relacio": "➕  Add relation",
+        "nom": "Name", "unitat": "Unit", "valor": "Value",
+        "minim": "Minimum", "maxim": "Maximum", "tipus": "Type",
+        "origen_desti": "Origin → Destination", "pes": "Weight", "descripcio": "Description",
+        "lang_prompt": "In which language do you want the AI?"
+    }
+}
+
+def t(key):
+    """Retorna el text en l'idioma actiu."""
+    idioma = st.session_state.get('idioma', 'ca')
+    return TEXTOS.get(idioma, TEXTOS['ca']).get(key, key)
+
+def lang_ia():
+    """Retorna l'idioma per als prompts de la IA."""
+    idiomes_ia = {'ca': 'català', 'es': 'español', 'en': 'English'}
+    return idiomes_ia.get(st.session_state.get('idioma', 'ca'), 'català')
+
+
+# =============================================================================
+# PANTALLA DE BENVINGUDA / SELECTOR D'IDIOMA
+# =============================================================================
+
+if 'idioma' not in st.session_state:
+    st.markdown("""
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;">
+        <div style="font-family:'Space Mono',monospace;font-size:3rem;margin-bottom:8px;">🌍</div>
+        <div style="font-family:'Space Mono',monospace;font-size:2rem;color:#e8f4fd;font-weight:700;margin-bottom:8px;">EcoSim</div>
+        <div style="font-size:0.9rem;color:#4a6a8a;margin-bottom:40px;">Scientific Ecosystem Simulator</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        idioma_sel = st.selectbox(
+            "🌍 Selecciona l'idioma / Selecciona el idioma / Select language",
+            options=["ca", "es", "en"],
+            format_func=lambda x: {"ca": "🇪🇸 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x]
+        )
+        if st.button("▶  Continuar / Continue", type="primary", use_container_width=True):
+            st.session_state['idioma'] = idioma_sel
+            st.rerun()
+    st.stop()
+
 if not os.path.exists(DB_PATH):
     crear_base_dades(DB_PATH)
 
@@ -72,6 +233,60 @@ if not os.path.exists(DB_PATH):
 # =============================================================================
 # FUNCIONS AUXILIARS
 # =============================================================================
+
+def _generar_resum_pas(escenari_nom, pas, canvis, idioma):
+    """Genera una explicació breu d'un pas de simulació."""
+    try:
+        agent = AgentIA()
+        prompt = f"""Ets un científic expert. Explica en 2-3 frases en {idioma} 
+        què ha passat en el pas {pas} de la simulació "{escenari_nom}".
+        Canvis observats: {canvis}
+        Explica les causes i efectes de manera clara i científica."""
+        resposta = agent.client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5, max_tokens=200
+        )
+        return resposta.choices[0].message.content.strip()
+    except Exception:
+        return ""
+
+
+def _generar_informe_final(escenari_nom, tema, historial, idioma):
+    """Genera un informe complet de la simulació."""
+    try:
+        agent = AgentIA()
+        resum_canvis = []
+        for nom_var, vals in historial.items():
+            if len(vals) >= 2:
+                canvi = vals[-1] - vals[0]
+                pct   = (canvi / vals[0] * 100) if vals[0] != 0 else 0
+                resum_canvis.append(f"{nom_var}: {vals[0]:.2f} → {vals[-1]:.2f} ({pct:+.1f}%)")
+
+        prompt = f"""Ets un científic expert en modelatge d'ecosistemes. 
+        Genera un informe científic complet en {idioma} de la simulació "{escenari_nom}" sobre "{tema}".
+        
+        Resultats de la simulació:
+        {chr(10).join(resum_canvis)}
+        
+        L'informe ha d'incloure:
+        1. Resum executiu (2-3 frases)
+        2. Principals tendències observades
+        3. Relacions causa-efecte detectades
+        4. Conclusions científiques
+        5. Recomanacions per futures simulacions
+        
+        Escriu de manera clara, científica i accessible."""
+
+        resposta = agent.client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4, max_tokens=800
+        )
+        return resposta.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error generant l'informe: {e}"
+
 
 def _guardar_escenari_ia(nom, descripcio, unitat, num_passos, ei):
     conn = sqlite3.connect(DB_PATH)
@@ -153,6 +368,19 @@ with st.sidebar:
         "🎛️  Simulació",
         "📊  Gràfiques"
     ], label_visibility="collapsed")
+
+    # Selector d'idioma al sidebar
+    idioma_actual = st.session_state.get('idioma', 'ca')
+    nou_idioma = st.selectbox(
+        t('idioma_label'),
+        options=["ca", "es", "en"],
+        index=["ca","es","en"].index(idioma_actual),
+        format_func=lambda x: {"ca": "🇪🇸 Català", "es": "🇪🇸 Español", "en": "🇬🇧 English"}[x],
+        key="selector_idioma"
+    )
+    if nou_idioma != idioma_actual:
+        st.session_state['idioma'] = nou_idioma
+        st.rerun()
 
     if 'escenari_actiu' in st.session_state:
         st.markdown("---")
@@ -463,21 +691,40 @@ elif "✏️" in seccio:
         # --- TAB VARIABLES ---
         with tab1:
             st.markdown("#### Variables actuals")
+            # Capçaleres
+            hh1, hh2, hh3, hh4, hh5, hh6, hh7 = st.columns([2,1,1,1,1,1,0.5])
+            with hh1: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Nom</div>', unsafe_allow_html=True)
+            with hh2: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Unitat</div>', unsafe_allow_html=True)
+            with hh3: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Valor</div>', unsafe_allow_html=True)
+            with hh4: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Mínim</div>', unsafe_allow_html=True)
+            with hh5: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Màxim</div>', unsafe_allow_html=True)
+            with hh6: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;padding:4px 0;">Tipus</div>', unsafe_allow_html=True)
+
             for v in variables:
-                icona = "📌" if v['tipus_var']=='fixa' else "🔄"
-                cv1, cv2, cv3, cv4, cv5 = st.columns([3,1,1,1,0.5])
-                with cv1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">{icona} {v["nom"]} <span style="color:#2d5a8a;font-size:0.75rem;">({v.get("unitat","")})</span></div>', unsafe_allow_html=True)
-                with cv2: st.markdown(f'<div style="padding:8px 0;color:#38bdf8;font-family:monospace;font-size:0.8rem;">Val: {v["valor_inicial"]}</div>', unsafe_allow_html=True)
-                with cv3: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">Min: {v["valor_min"] or 0}</div>', unsafe_allow_html=True)
-                with cv4: st.markdown(f'<div style="padding:8px 0;color:#2d5a8a;font-family:monospace;font-size:0.75rem;">Max: {v["valor_max"] or 100}</div>', unsafe_allow_html=True)
-                with cv5:
-                    if st.button("🗑", key=f"dvar_{v['id']}"):
+                icona = '📌' if v['tipus_var']=='fixa' else '🔄'
+                cv1, cv2, cv3, cv4, cv5, cv6, cv7 = st.columns([2,1,1,1,1,1,0.5])
+                with cv1: st.markdown(f'<div style="padding:8px 0;color:#94b8d8;font-size:0.85rem;">{icona} {v["nom"]}</div>', unsafe_allow_html=True)
+                with cv2: nou_unit = st.text_input('', value=v.get('unitat',''), key=f'eunit_{v["id"]}', label_visibility='collapsed')
+                with cv3: nou_val  = st.number_input('', value=float(v['valor_inicial']), key=f'eval_{v["id"]}', label_visibility='collapsed')
+                with cv4: nou_min  = st.number_input('', value=float(v['valor_min'] or 0), key=f'emin_{v["id"]}', label_visibility='collapsed')
+                with cv5: nou_max  = st.number_input('', value=float(v['valor_max'] or 100), key=f'emax_{v["id"]}', label_visibility='collapsed')
+                with cv6: nou_tipus = st.selectbox('', ['dinamica','fixa'], index=0 if v['tipus_var']=='dinamica' else 1, key=f'etip_{v["id"]}', label_visibility='collapsed')
+                with cv7:
+                    if st.button('🗑', key=f'dvar_{v["id"]}'):
                         conn_dv = sqlite3.connect(DB_PATH)
-                        conn_dv.execute("PRAGMA foreign_keys=ON;")
-                        conn_dv.execute("DELETE FROM variables WHERE id=?", (v['id'],))
+                        conn_dv.execute('PRAGMA foreign_keys=ON;')
+                        conn_dv.execute('DELETE FROM variables WHERE id=?', (v['id'],))
                         conn_dv.commit()
                         conn_dv.close()
                         st.rerun()
+                # Guardar canvis automàticament
+                if (nou_val != float(v['valor_inicial']) or nou_min != float(v['valor_min'] or 0) or
+                    nou_max != float(v['valor_max'] or 100) or nou_unit != v.get('unitat','') or nou_tipus != v['tipus_var']):
+                    conn_upd = sqlite3.connect(DB_PATH)
+                    conn_upd.execute('UPDATE variables SET unitat=?, valor_inicial=?, valor_min=?, valor_max=?, tipus_var=? WHERE id=?',
+                                     (nou_unit, nou_val, nou_min, nou_max, nou_tipus, v['id']))
+                    conn_upd.commit()
+                    conn_upd.close()
 
             st.markdown("---")
             st.markdown("#### ➕ Afegir nova variable")
@@ -630,15 +877,55 @@ elif "🎛️" in seccio:
                     m = MotorSimulacio(escenari_id=eid, db_path=DB_PATH)
                     m.carregar()
                     m.simular_tot()
-                st.success("✅ Simulació completada! Ves a 📊 Gràfiques.")
+                st.success("✅ Simulació completada!")
+                # Generar informe final IA
+                with st.spinner("La IA analitza els resultats..."):
+                    conn_h = sqlite3.connect(DB_PATH)
+                    cur_h  = conn_h.cursor()
+                    cur_h.execute("""SELECT v.nom, h.pas, h.valor
+                                     FROM historial_valors h JOIN variables v ON h.variable_id=v.id
+                                     WHERE h.escenari_id=? AND v.tipus_var='dinamica'
+                                     ORDER BY v.nom, h.pas""", (eid,))
+                    rows = cur_h.fetchall()
+                    conn_h.close()
+                    historial = {}
+                    for nom_v, pas, val in rows:
+                        if nom_v not in historial: historial[nom_v] = []
+                        historial[nom_v].append(val)
+                    informe = _generar_informe_final(esc['nom'], esc['tema'], historial, lang_ia())
+                    st.session_state[f'informe_{eid}'] = informe
+                st.markdown(f"""
+                <div class="sim-card-green">
+                    <div style="font-size:0.75rem;color:#1a6040;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">📋 Informe final de la IA</div>
+                    <div style="font-size:0.9rem;color:#5a9a78;line-height:1.7;">{informe}</div>
+                </div>""", unsafe_allow_html=True)
         with bb:
             if st.button("⏭️  Avançar un pas"):
                 if 'motor_pas' not in st.session_state:
                     st.session_state['motor_pas'] = MotorSimulacio(escenari_id=eid, db_path=DB_PATH)
                     st.session_state['motor_pas'].carregar()
-                ok = st.session_state['motor_pas'].calcular_pas()
-                if ok: st.rerun()
-                else:  st.info("Simulació finalitzada.")
+                motor = st.session_state['motor_pas']
+                valors_abans = {vid: v['valor'] for vid, v in motor.variables.items()}
+                ok = motor.calcular_pas()
+                if ok:
+                    canvis = []
+                    for vid, v in motor.variables.items():
+                        diff = v['valor'] - valors_abans.get(vid, v['valor'])
+                        if abs(diff) > 0.01:
+                            signe = "+" if diff > 0 else ""
+                            canvis.append(f"{v['nom']}: {valors_abans[vid]:.2f} → {v['valor']:.2f} ({signe}{diff:.2f})")
+                    if canvis:
+                        with st.spinner("La IA analitza el pas..."):
+                            resum_pas = _generar_resum_pas(esc['nom'], motor.pas_actual, ", ".join(canvis), lang_ia())
+                        if resum_pas:
+                            st.markdown(f"""
+                            <div style="background:#0d1829;border-left:3px solid #34d399;border-radius:0 8px 8px 0;padding:12px 16px;margin:8px 0;">
+                                <div style="font-size:0.7rem;color:#1a6040;text-transform:uppercase;margin-bottom:4px;">🤖 Pas {motor.pas_actual}</div>
+                                <div style="font-size:0.85rem;color:#5a9a78;line-height:1.6;">{resum_pas}</div>
+                            </div>""", unsafe_allow_html=True)
+                    st.rerun()
+                else:
+                    st.info("Simulació finalitzada.")
         with bc:
             if st.button("↺  Reiniciar"):
                 if 'motor_pas' in st.session_state: del st.session_state['motor_pas']
