@@ -551,6 +551,8 @@ if "🆕" in seccio:
         if 'proposta_manual' in st.session_state:
             pm  = st.session_state['proposta_manual']
             cfg = st.session_state.get('config_manual',{})
+            # La descripció sempre ve de l'usuari, no de la IA
+            pm['descripcio'] = cfg.get('desc', pm.get('descripcio',''))
             st.markdown("---")
             st.markdown("## ✏️ Revisa i modifica")
             st.markdown('<div class="sim-card-amber"><div style="font-size:0.8rem;color:#a07830;line-height:1.6;">🔬 Esborra el que no necessites i afegeix les teves pròpies variables abans de guardar.</div></div>', unsafe_allow_html=True)
