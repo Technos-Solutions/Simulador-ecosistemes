@@ -460,9 +460,15 @@ if "🆕" in seccio:
         c1, c2 = st.columns([2,1])
         with c1:
             st.markdown("### Descriu el teu escenari")
+            nom_a   = st.text_input("Nom de l'escenari", placeholder="Ex: Lotka-Volterra Test")
             tema    = st.text_input("Tema de la simulació", placeholder="Ex: Bosc pirinenc afectat per la sequera...")
-            context = st.text_area("Context addicional (opcional)", placeholder="Zona geogràfica, condicions especials...", height=80)
-            gen     = st.button("🤖  Generar amb IA", type="primary", disabled=not tema)
+            context = st.text_area("Descripció i objectiu", placeholder="Descriu detalladament l'objectiu i el context. Com més detall donis, millor proposarà la IA les variables i relacions.", height=100)
+            ma_a, mb_a = st.columns(2)
+            with ma_a: unitat_a = st.selectbox("Unitat de temps", ["any","mes","dia","hora"], key="unitat_auto")
+            with mb_a: passos_a = st.number_input("Passos", min_value=1, max_value=200, value=10, key="passos_auto")
+            if not nom_a or not tema:
+                st.caption("⚠️ Omple el Nom i el Tema per activar el botó.")
+            gen     = st.button("🤖  Generar amb IA", type="primary", disabled=not (nom_a and tema))
         with c2:
             st.markdown('<div class="sim-card-green"><div style="font-size:0.75rem;color:#1a6040;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Mode automàtic</div><div style="font-size:0.85rem;color:#5a9a78;line-height:1.6;">La IA genera automàticament variables, relacions i pesos científics.</div></div>', unsafe_allow_html=True)
 
@@ -471,8 +477,12 @@ if "🆕" in seccio:
                 agent       = AgentIA()
                 escenari_ia = agent.generar_escenari(tema, context)
             if escenari_ia:
-                st.session_state['escenari_ia'] = escenari_ia
-                st.session_state['tema_ia']     = tema
+                st.session_state['escenari_ia']    = escenari_ia
+                st.session_state['tema_ia']        = tema
+                st.session_state['nom_auto']       = nom_a
+                st.session_state['context_auto']   = context
+                st.session_state['unitat_auto_val'] = unitat_a
+                st.session_state['passos_auto_val'] = passos_a
             else:
                 st.error("Error generant l'escenari. Comprova la clau de Groq.")
 
@@ -481,10 +491,10 @@ if "🆕" in seccio:
             st.markdown("---")
             st.markdown("## Revisa i confirma")
             cc1, cc2, cc3 = st.columns([3,1,1])
-            with cc1: nom = st.text_input("Nom de l'escenari", value=st.session_state.get('tema_ia',''))
-            with cc2: unitat = st.selectbox("Unitat de temps", ["any","mes","dia","hora"], index=["any","mes","dia","hora"].index(ei.get('unitat_temps','any')))
-            with cc3: num_passos = st.number_input("Passos", min_value=1, max_value=200, value=int(ei.get('num_passos',10)))
-            descripcio = st.text_area("Descripció", value=ei.get('descripcio',''), height=80)
+            with cc1: nom = st.text_input("Nom de l'escenari", value=st.session_state.get('nom_auto', st.session_state.get('tema_ia','')))
+            with cc2: unitat = st.selectbox("Unitat de temps", ["any","mes","dia","hora"], index=["any","mes","dia","hora"].index(st.session_state.get('unitat_auto_val', ei.get('unitat_temps','any'))))
+            with cc3: num_passos = st.number_input("Passos", min_value=1, max_value=200, value=int(st.session_state.get('passos_auto_val', ei.get('num_passos',10))))
+            descripcio = st.text_area("Descripció", value=st.session_state.get('context_auto', ei.get('descripcio','')), height=80)
 
             cv1, cv2 = st.columns(2)
             with cv1:
