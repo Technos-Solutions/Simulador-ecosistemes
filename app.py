@@ -555,9 +555,27 @@ if "🆕" in seccio:
             pm  = st.session_state['proposta_manual']
             cfg = st.session_state.get('config_manual',{})
             # La descripció sempre ve de l'usuari, no de la IA
-            pm['descripcio'] = cfg.get('desc', pm.get('descripcio',''))
             st.markdown("---")
             st.markdown("## ✏️ Revisa i modifica")
+
+            # Camps editables de l'escenari
+            rd1, rd2, rd3 = st.columns([3,1,1])
+            with rd1:
+                nom_rev = st.text_input("Nom de l'escenari", value=cfg.get('nom',''), key="nom_rev")
+                cfg['nom'] = nom_rev
+            with rd2:
+                unit_rev = st.selectbox("Unitat de temps", ["any","mes","dia","hora"],
+                                        index=["any","mes","dia","hora"].index(cfg.get('unitat','any')),
+                                        key="unit_rev")
+                cfg['unitat'] = unit_rev
+            with rd3:
+                pass_rev = st.number_input("Passos", min_value=1, max_value=200,
+                                           value=int(cfg.get('passos',10)), key="pass_rev")
+                cfg['passos'] = pass_rev
+            desc_rev = st.text_area("Descripció", value=cfg.get('desc',''), height=80, key="desc_rev")
+            cfg['desc'] = desc_rev
+            pm['descripcio'] = desc_rev
+
             st.markdown('<div class="sim-card-amber"><div style="font-size:0.8rem;color:#a07830;line-height:1.6;">🔬 Esborra el que no necessites i afegeix les teves pròpies variables abans de guardar.</div></div>', unsafe_allow_html=True)
 
             # Capçaleres
