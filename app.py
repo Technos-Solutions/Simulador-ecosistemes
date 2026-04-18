@@ -528,12 +528,15 @@ if "🆕" in seccio:
         c1, c2 = st.columns([2,1])
         with c1:
             st.markdown("### Defineix el teu escenari")
-            nom_m  = st.text_input("Nom de l'escenari")
-            tema_m = st.text_input("Tema", placeholder="Ex: Contaminació a una zona industrial...")
-            desc_m = st.text_area("Descripció i objectiu", height=80)
+            nom_m  = st.text_input("Nom de l'escenari", placeholder="Ex: Lotka-Volterra Test")
+            tema_m = st.text_input("Tema", placeholder="Ex: Predador-presa conills i llops")
+            desc_m = st.text_area("Descripció i objectiu", height=100,
+                                   placeholder="Descriu detalladament l'objectiu i el context. Com més detall donis, millor proposarà la IA les variables i relacions.")
             ma2, mb2 = st.columns(2)
             with ma2: unitat_m = st.selectbox("Unitat de temps", ["any","mes","dia","hora"])
             with mb2: passos_m = st.number_input("Passos", min_value=1, max_value=200, value=10)
+            if not nom_m or not tema_m:
+                st.caption("⚠️ Omple el Nom i el Tema per activar el botó.")
             gen_m = st.button("🔬  Proposar variables i relacions amb IA", type="primary", disabled=not (nom_m and tema_m))
         with c2:
             st.markdown('<div class="sim-card-amber"><div style="font-size:0.75rem;color:#7a5a00;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Mode assistit</div><div style="font-size:0.85rem;color:#a07830;line-height:1.6;">La IA proposa variables i relacions. Tu pots esborrar les que no vols i afegir les teves pròpies.</div></div>', unsafe_allow_html=True)
