@@ -88,16 +88,22 @@ def get_relacions(eid):
             'desti_id': r['variable_desti_id'],
             'pes': r['pes'],
             'descripcio': r.get('descripcio', ''),
-            'generada_per_ia': r.get('generada_per_ia', False)
+            'generada_per_ia': r.get('generada_per_ia', False),
+            'tipus_relacio': r.get('tipus_relacio', 'proporcional'),
+            'equacio': r.get('equacio', ''),
+            'alpha': r.get('alpha', 0),
+            'beta': r.get('beta', 0),
         })
     return relacions
 
-def crear_relacio(eid, origen_id, desti_id, pes, descripcio='', generada_per_ia=False):
+def crear_relacio(eid, origen_id, desti_id, pes, descripcio='', generada_per_ia=False, tipus_relacio='proporcional', equacio='', alpha=0, beta=0):
     sb = get_db()
     sb.table('relacions').insert({
         'escenari_id': eid, 'variable_origen_id': origen_id,
         'variable_desti_id': desti_id, 'pes': pes,
-        'descripcio': descripcio, 'generada_per_ia': generada_per_ia
+        'descripcio': descripcio, 'generada_per_ia': generada_per_ia,
+        'tipus_relacio': tipus_relacio, 'equacio': equacio,
+        'alpha': alpha, 'beta': beta
     }).execute()
 
 def actualitzar_pes_relacio(rid, pes):
