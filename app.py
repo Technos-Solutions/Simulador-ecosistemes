@@ -13,7 +13,7 @@ from database import (
     get_historial, esborrar_historial, get_valors_ultim_pas,
     get_notes, crear_nota
 )
-from core.motor import MotorSimulacio
+from motor import MotorSimulacio
 from ia.groq_agent import AgentIA
 
 st.set_page_config(
@@ -796,10 +796,14 @@ elif "✏️" in seccio:
             if not relacions:
                 st.warning("Aquest escenari no té relacions. Afegeix-ne per que la simulació evolucioni.")
             else:
+                rh1, rh2, rh3, rh4 = st.columns([3,1,1,0.5])
+                with rh1: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;">Origen → Destí</div>', unsafe_allow_html=True)
+                with rh2: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;">Pes</div>', unsafe_allow_html=True)
+                with rh3: st.markdown('<div style="font-size:0.7rem;color:#2d5a8a;text-transform:uppercase;">Tipus</div>', unsafe_allow_html=True)
                 for r in relacions:
                     pcls  = "rel-pes-pos" if r['pes']>0 else "rel-pes-neg"
                     signe = "▲" if r['pes']>0 else "▼"
-                    cr1, cr2, cr3 = st.columns([4,1,0.5])
+                    cr1, cr2, cr3, cr4 = st.columns([3,1,1,0.5])
                     with cr1:
                         st.markdown(f'<div class="rel-row"><span class="rel-origen">{r["origen"]}</span><span style="color:#1e3050;">→</span><span class="rel-desti">{r["desti"]}</span><span class="{pcls}">{signe} {abs(r["pes"])}</span></div>', unsafe_allow_html=True)
                     with cr2:
@@ -808,6 +812,17 @@ elif "✏️" in seccio:
                             actualitzar_pes_relacio(r['id'], nou_pes)
                             st.rerun()
                     with cr3:
+                        tipus_opts = ['proporcional', 'producte', 'lineal']
+                        tipus_act  = r.get('tipus_relacio', 'proporcional')
+                        if tipus_act not in tipus_opts: tipus_act = 'proporcional'
+                        nou_tipus = st.selectbox("Tipus", tipus_opts,
+                                                 index=tipus_opts.index(tipus_act),
+                                                 key=f"tip_{r['id']}", label_visibility="collapsed")
+                        if nou_tipus != tipus_act:
+                            sb = get_db()
+                            sb.table('relacions').update({'tipus_relacio': nou_tipus}).eq('id', r['id']).execute()
+                            st.rerun()
+                    with cr4:
                         if st.button("🗑", key=f"drel_{r['id']}"):
                             esborrar_relacio(r['id'])
                             st.rerun()
@@ -816,17 +831,18 @@ elif "✏️" in seccio:
             st.markdown("#### ➕ Afegir nova relació")
             noms_vars = [v['nom'] for v in variables]
             if len(noms_vars) >= 2:
-                ra1, ra2, ra3 = st.columns(3)
+                ra1, ra2, ra3, ra4 = st.columns(4)
                 with ra1: ar_orig = st.selectbox("Variable origen", noms_vars, key="ar_orig")
                 with ra2: ar_dest = st.selectbox("Variable destí", noms_vars, key="ar_dest")
                 with ra3: ar_pes  = st.number_input("Pes (-1 a +1)", min_value=-1.0, max_value=1.0, value=0.5, step=0.1, key="ar_pes")
+                with ra4: ar_tipus = st.selectbox("Tipus", ['proporcional','producte','lineal'], key="ar_tipus")
                 ar_desc = st.text_input("Descripció de la relació", key="ar_desc", placeholder="Ex: Temperatura alta redueix la humitat del sòl")
                 if st.button("➕  Afegir relació", type="primary"):
                     vars_dict = {v['nom']: v['id'] for v in variables}
                     orig_id = vars_dict.get(ar_orig)
                     dest_id = vars_dict.get(ar_dest)
                     if orig_id and dest_id:
-                        crear_relacio(eid, orig_id, dest_id, ar_pes, ar_desc)
+                        crear_relacio(eid, orig_id, dest_id, ar_pes, ar_desc, tipus_relacio=ar_tipus)
                         st.success("Relació afegida!")
                     else:
                         st.error("Error afegint la relació.")
