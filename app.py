@@ -13,7 +13,7 @@ from database import (
     get_historial, esborrar_historial, get_valors_ultim_pas,
     get_notes, crear_nota
 )
-from core.motor import MotorSimulacio
+from motor import MotorSimulacio
 from ia.groq_agent import AgentIA
 
 st.set_page_config(
@@ -825,11 +825,11 @@ elif "✏️" in seccio:
                     vars_dict = {v['nom']: v['id'] for v in variables}
                     orig_id = vars_dict.get(ar_orig)
                     dest_id = vars_dict.get(ar_dest)
-                    if orig_id and dest_id and ar_orig != ar_dest:
+                    if orig_id and dest_id:
                         crear_relacio(eid, orig_id, dest_id, ar_pes, ar_desc)
                         st.success("Relació afegida!")
                     else:
-                        st.error("Selecciona dues variables diferents.")
+                        st.error("Error afegint la relació.")
                     st.rerun()
             else:
                 st.info("Necessites almenys 2 variables per crear relacions.")
