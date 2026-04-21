@@ -13,7 +13,7 @@ from database import (
     get_historial, esborrar_historial, get_valors_ultim_pas,
     get_notes, crear_nota
 )
-python from core.motor import Motorsimulacio
+from core.motor import Motorsimulacio
 from ia.groq_agent import AgentIA
 
 st.set_page_config(
